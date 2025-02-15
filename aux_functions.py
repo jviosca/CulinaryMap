@@ -1,7 +1,9 @@
 import json
 from cryptography.fernet import Fernet
 import streamlit as st
-import toml 
+import toml
+import requests
+import re
 
 # Clave para cifrar y descifrar JSON (guardar en un lugar seguro en producción)
 # Cargar los secretos manualmente si no están en Streamlit Cloud
@@ -21,6 +23,17 @@ if not SECRET_KEY:
 
 cipher = Fernet(SECRET_KEY)
 
+def authenticate():
+    """Verifica la contraseña ingresada."""
+    # Cargar la contraseña desde `secrets.toml`
+    correct_password = st.secrets["authentication"]["admin_password"]
+    
+    if "password" in st.session_state and st.session_state.password == correct_password:
+        st.session_state.authenticated = True
+        st.session_state.pop("password")  # Borrar la contraseña por seguridad
+    else:
+        st.error("Contraseña incorrecta. Intenta nuevamente.")
+
 # Cargar datos desde JSON cifrado
 def load_data():
     try:
@@ -36,3 +49,44 @@ def save_data(data):
     encrypted_data = cipher.encrypt(json.dumps(data).encode())
     with open("sitios.json", "wb") as f:
         f.write(encrypted_data)
+        
+
+def obtener_coordenadas_desde_google_maps(url):
+    """
+    Extrae las coordenadas (latitud, longitud) desde un enlace de Google Maps.
+    Soporta enlaces largos y cortos de la app móvil.
+    """
+    
+    print(f"URL de entrada: {url}")  # Debugging: Verificar URL de entrada
+    
+    # Paso 1: Si es un enlace corto, resolverlo
+    if "maps.app.goo.gl" in url:
+        try:
+            respuesta = requests.get(url, allow_redirects=True)
+            url = respuesta.url  # Obtener la URL final
+            st.write(f"URL resuelta: {url}")  # Debugging: Verificar URL después de la redirección
+        except requests.RequestException as e:
+            st.write("Error al resolver URL corta:", e)
+            return None
+    
+    # Paso 2: Buscar coordenadas en la URL
+    patron = r'@(-?\d+\.\d+),(-?\d+\.\d+)'
+    match = re.search(patron, url)
+    
+    if match:
+        lat, lon = float(match.group(1)), float(match.group(2))
+        st.write(f"Coordenadas encontradas con el primer patrón: {lat}, {lon}")  # Debugging
+        return lat, lon
+    
+    # Alternativa para otra estructura de URL
+    patron_alt = r'/place/(-?\d+\.\d+),(-?\d+\.\d+)'
+    match_alt = re.search(patron_alt, url)
+    
+    if match_alt:
+        lat, lon = float(match_alt.group(1)), float(match_alt.group(2))
+        st.write(f"Coordenadas encontradas con el segundo patrón: {lat}, {lon}")  # Debugging
+        return lat, lon
+    
+    st.write("No se encontraron coordenadas en la URL.")  # Debugging: Caso en que no se encuentran coordenadas
+    return None
+
