@@ -1,8 +1,24 @@
 import json
 from cryptography.fernet import Fernet
+import streamlit as st
+import toml 
 
 # Clave para cifrar y descifrar JSON (guardar en un lugar seguro en producción)
-SECRET_KEY = b'my_secret_key_here'  # Generar con Fernet.generate_key()
+# Cargar los secretos manualmente si no están en Streamlit Cloud
+if "SECRET_KEY" not in st.secrets:
+    try:
+        secrets = toml.load(".streamlit/secrets.toml")
+        SECRET_KEY = secrets["general"]["SECRET_KEY"].encode()
+    except Exception as e:
+        st.error(f"No se pudo cargar SECRET_KEY: {e}")
+        SECRET_KEY = None
+else:
+    SECRET_KEY = st.secrets["SECRET_KEY"].encode()
+
+# Si no hay clave, lanza un error
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY no está configurada correctamente.")
+
 cipher = Fernet(SECRET_KEY)
 
 # Cargar datos desde JSON cifrado
