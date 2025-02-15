@@ -115,7 +115,7 @@ elif page == "🔑 Admin":
 
     # Mostrar y editar etiquetas
     st.subheader("📋 Editar Etiquetas")
-    edited_etiquetas = st.data_editor(df_etiquetas, use_container_width=True)
+    edited_etiquetas = st.data_editor(df_etiquetas.reset_index(drop=True), use_container_width=True, hide_index=True)
     if st.button("Guardar cambios en etiquetas"):
         df_etiquetas = edited_etiquetas  # Asegurar que los cambios se reflejen en el dataframe principal
         save_data(df_sitios, df_etiqueta)
