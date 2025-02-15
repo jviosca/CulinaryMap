@@ -4,24 +4,47 @@ import streamlit as st
 import toml
 import requests
 import re
+import base64
+import pandas as pd
 
-# Clave para cifrar y descifrar JSON (guardar en un lugar seguro en producción)
-# Cargar los secretos manualmente si no están en Streamlit Cloud
-if "SECRET_KEY" not in st.secrets:
-    try:
-        secrets = toml.load(".streamlit/secrets.toml")
-        SECRET_KEY = secrets["general"]["SECRET_KEY"].encode()
-    except Exception as e:
-        st.error(f"No se pudo cargar SECRET_KEY: {e}")
-        SECRET_KEY = None
-else:
-    SECRET_KEY = st.secrets["SECRET_KEY"].encode()
 
-# Si no hay clave, lanza un error
-if not SECRET_KEY:
-    raise ValueError("SECRET_KEY no está configurada correctamente.")
+SECRETS_FILE = ".streamlit/secrets.toml"
 
-cipher = Fernet(SECRET_KEY)
+def get_secret_key():
+    """Obtiene la clave secreta, ya sea desde Streamlit Cloud o desde el archivo local."""
+    
+    # 🌐 Modo Streamlit Cloud: Usar `st.secrets`
+    if "general" in st.secrets and "SECRET_KEY" in st.secrets["general"]:
+        return st.secrets["general"]["SECRET_KEY"]
+
+    # 🖥️ Modo Local: Usar `.streamlit/secrets.toml`
+    if os.path.exists(SECRETS_FILE):
+        secrets = toml.load(SECRETS_FILE)
+        if "general" in secrets and "SECRET_KEY" in secrets["general"]:
+            return secrets["general"]["SECRET_KEY"]
+
+    # 🚨 Si estamos en Streamlit Cloud y no hay clave, lanzar error
+    if not os.path.exists(SECRETS_FILE) and st.secrets._file_path is None:
+        st.error("❌ ERROR: Debes configurar SECRET_KEY en Streamlit Cloud (Settings > Secrets)")
+        st.stop()
+
+    # 🔐 Generar nueva clave en local si no existe
+    secret_key = Fernet.generate_key().decode()
+    secrets = {"general": {"SECRET_KEY": secret_key}}
+
+    with open(SECRETS_FILE, "w") as f:
+        toml.dump(secrets, f)
+
+    print(f"✅ Nueva clave generada y guardada en {SECRETS_FILE}")
+    return secret_key
+
+# 🔑 Obtener la clave secreta
+SECRET_KEY = get_secret_key()
+
+# 📌 Inicializar Fernet con la clave correcta
+FERNET = Fernet(SECRET_KEY.encode())
+st.write("🔐 Clave de cifrado cargada correctamente.")
+
 
 def authenticate():
     """Verifica la contraseña ingresada."""
@@ -35,7 +58,7 @@ def authenticate():
         st.error("Contraseña incorrecta. Intenta nuevamente.")
 
 # Cargar datos desde JSON cifrado
-def load_data():
+def load_data_old():
     try:
         with open("sitios.json", "rb") as f:
             encrypted_data = f.read()
@@ -43,13 +66,46 @@ def load_data():
     except:
         decrypted_data = []  # Si no hay datos, inicializar vacío
     return decrypted_data
+    
+def load_data_old2():
+    try:
+        with open("sitios.json", "rb") as file:
+            encrypted_data = file.read()
+        decrypted_data = FERNET.decrypt(encrypted_data).decode()
+        return pd.DataFrame(json.loads(decrypted_data))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return pd.DataFrame(columns=["nombre", "etiquetas", "enlace", "lat", "lon", "visitado", "puntuación"])
+
+def load_data():
+    try:
+        with open("sitios.json", "rb") as file:
+            encrypted_data = file.read()
+        decrypted_data = FERNET.decrypt(encrypted_data).decode()
+        df = pd.DataFrame(json.loads(decrypted_data))
+
+        # ✅ Asegurar que la columna "enlace" y otras siempre existan
+        for col in ["nombre", "etiquetas", "enlace", "lat", "lon", "visitado", "puntuación"]:
+            if col not in df.columns:
+                df[col] = "" if col == "enlace" else None  # Valor por defecto
+
+        return df
+    except (FileNotFoundError, json.JSONDecodeError):
+        return pd.DataFrame(columns=["nombre", "etiquetas", "enlace", "lat", "lon", "visitado", "puntuación"])
 
 # Guardar datos en JSON cifrado
-def save_data(data):
+def save_data_old(df):
+    data = df.to_dict(orient="records")
     encrypted_data = cipher.encrypt(json.dumps(data).encode())
+    encrypted_data = FERNET.encrypt(json.dumps(data, indent=4, ensure_ascii=False).encode())
     with open("sitios.json", "wb") as f:
         f.write(encrypted_data)
-        
+
+# 🔐 Función para encriptar y guardar datos
+def save_data(df):
+    data = df.to_dict(orient="records")
+    encrypted_data = FERNET.encrypt(json.dumps(data, indent=4, ensure_ascii=False).encode())
+    with open("sitios.json", "wb") as file:
+        file.write(encrypted_data)
 
 def obtener_coordenadas_desde_google_maps(url):
     """
