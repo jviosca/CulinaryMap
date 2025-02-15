@@ -12,7 +12,7 @@ CulinaryMap is an application that displays dining locations based on proximity,
 ## Installation and Usage
 ### 1. Clone the repository
 ```sh
- git clone https://github.com/yourusername/CulinaryMap.git
+ git clone https://github.com/jviosca/CulinaryMap.git
 ```
 
 ### 2. Install dependencies
