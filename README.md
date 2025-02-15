@@ -17,7 +17,7 @@ CulinaryMap is an application that displays dining locations based on proximity,
 
 ### 2. Install dependencies
 ```sh
-pip install -r requirements.txt
+conda env create --prefix ./envs -f environment.yml
 ```
 
 ### 3. Run the application
