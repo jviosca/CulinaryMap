@@ -15,7 +15,7 @@ CulinaryMap is an application that displays dining locations based on proximity,
  git clone https://github.com/jviosca/CulinaryMap.git
 ```
 
-### 2. Install dependencies
+### 2. Create environment and install dependencies (for development)
 ```sh
 conda env create --prefix ./envs -f environment.yml
 ```
@@ -24,6 +24,18 @@ conda env create --prefix ./envs -f environment.yml
 ```sh
 streamlit run app.py
 ```
+
+### 4. Deployment at streamlit cloud
+To deploy the application to Streamlit Cloud, follow these steps:
+
+Ensure your repository contains a requirements.txt file with all necessary dependencies.
+
+Go to Streamlit Cloud and connect your GitHub repository.
+
+Set the main script to app.py and configure the necessary environment variables.
+
+Deploy and monitor logs for any potential errors.
+
 
 ## Technologies Used
 - **Python**: Main programming language.
