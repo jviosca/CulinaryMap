@@ -35,7 +35,7 @@ def get_secret_key():
     with open(SECRETS_FILE, "w") as f:
         toml.dump(secrets, f)
 
-    print(f"✅ Nueva clave generada y guardada en {SECRETS_FILE}")
+    st.write(f"✅ Nueva clave generada y guardada en {SECRETS_FILE}")
     return secret_key
 
 # 🔑 Obtener la clave secreta
@@ -57,26 +57,7 @@ def authenticate():
     else:
         st.error("Contraseña incorrecta. Intenta nuevamente.")
 
-# Cargar datos desde JSON cifrado
 def load_data_old():
-    try:
-        with open("sitios.json", "rb") as f:
-            encrypted_data = f.read()
-        decrypted_data = json.loads(cipher.decrypt(encrypted_data).decode())
-    except:
-        decrypted_data = []  # Si no hay datos, inicializar vacío
-    return decrypted_data
-    
-def load_data_old2():
-    try:
-        with open("sitios.json", "rb") as file:
-            encrypted_data = file.read()
-        decrypted_data = FERNET.decrypt(encrypted_data).decode()
-        return pd.DataFrame(json.loads(decrypted_data))
-    except (FileNotFoundError, json.JSONDecodeError):
-        return pd.DataFrame(columns=["nombre", "etiquetas", "enlace", "lat", "lon", "visitado", "puntuación"])
-
-def load_data():
     try:
         with open("sitios.json", "rb") as file:
             encrypted_data = file.read()
@@ -92,17 +73,41 @@ def load_data():
     except (FileNotFoundError, json.JSONDecodeError):
         return pd.DataFrame(columns=["nombre", "etiquetas", "enlace", "lat", "lon", "visitado", "puntuación"])
 
-# Guardar datos en JSON cifrado
-def save_data_old(df):
-    data = df.to_dict(orient="records")
-    encrypted_data = cipher.encrypt(json.dumps(data).encode())
-    encrypted_data = FERNET.encrypt(json.dumps(data, indent=4, ensure_ascii=False).encode())
-    with open("sitios.json", "wb") as f:
-        f.write(encrypted_data)
+def load_data():
+    try:
+        with open("sitios.json", "rb") as file:
+            encrypted_data = file.read()
+        decrypted_data = json.loads(FERNET.decrypt(encrypted_data).decode())
+        # Convertir a DataFrame y asegurarse de que todas las columnas existen
+        df_sitios = pd.DataFrame(decrypted_data.get("sitios", []))
+        df_etiquetas = pd.DataFrame(decrypted_data.get("etiquetas", []))
+        
+        # Garantizar que ambas tablas tengan las columnas correctas
+        sitios_columnas = ["nombre", "etiquetas", "enlace", "lat", "lon", "visitado", "puntuación"]
+        etiquetas_columnas = ["id", "nombre", "descripcion"]
+
+        for col in sitios_columnas:
+            if col not in df_sitios.columns:
+                df_sitios[col] = None  # Asigna None a las columnas faltantes
+
+        for col in etiquetas_columnas:
+            if col not in df_etiquetas.columns:
+                df_etiquetas[col] = "" if col == "nombre" else None  # La columna "nombre" no puede ser None
+
+        return df_sitios, df_etiquetas
+
+    except (FileNotFoundError, json.JSONDecodeError):
+        return pd.DataFrame(columns=sitios_columnas), pd.DataFrame(columns=etiquetas_columnas)
 
 # 🔐 Función para encriptar y guardar datos
-def save_data(df):
+def save_data_old(df):
     data = df.to_dict(orient="records")
+    encrypted_data = FERNET.encrypt(json.dumps(data, indent=4, ensure_ascii=False).encode())
+    with open("sitios.json", "wb") as file:
+        file.write(encrypted_data)
+
+def save_data(df_sitios, df_etiquetas):
+    data = {"sitios": df_sitios.to_dict(orient="records"), "etiquetas": df_etiquetas.to_dict(orient="records")}
     encrypted_data = FERNET.encrypt(json.dumps(data, indent=4, ensure_ascii=False).encode())
     with open("sitios.json", "wb") as file:
         file.write(encrypted_data)

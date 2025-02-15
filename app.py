@@ -11,7 +11,7 @@ from aux_functions import (
 )
 
 # Cargar datos
-sitios = load_data()
+sitios, etiquetas = load_data()
 
 # Página de selección
 st.sidebar.title("Navegación")
@@ -61,13 +61,24 @@ elif page == "🔑 Admin":
     st.title("🔑 Administración de Sitios")
     st.success("¡Acceso concedido!")
     
-    df = load_data()
+    df_sitios, df_etiquetas = load_data()
+
+    # ➕ Agregar una etiqueta
+    with st.expander("➕ Agregar una nueva etiqueta"):
+        nombre_etiqueta = st.text_input("Nombre de la etiqueta")
+        descripcion_etiqueta = st.text_input("Descripción de la etiqueta")
+        if st.button("Añadir Etiqueta"):
+            nueva_etiqueta = pd.DataFrame([{ "id": len(df_etiquetas) + 1, "nombre": nombre_etiqueta, "descripcion": descripcion_etiqueta }])
+            df_etiquetas = pd.concat([df_etiquetas, nueva_etiqueta], ignore_index=True)
+            save_data(df_sitios, df_etiquetas)
+            st.success("✅ Etiqueta añadida correctamente!")
+            st.rerun()
     
     # ➕ Agregar un nuevo sitio
     with st.expander("➕ Agregar un nuevo sitio"):
         nombre = st.text_input("Nombre del sitio")
-        etiquetas = st.text_input("Etiquetas (separadas por comas)")
-        link = st.text_input("Enlace de Google Maps")
+        etiquetas_seleccionadas = st.multiselect("Etiquetas", df_etiquetas["nombre"].tolist())
+        link = st.text_input("Enlace de Google Maps", key="link")
         lat, lon = None, None
 
         if link:
@@ -85,26 +96,38 @@ elif page == "🔑 Admin":
             puntuacion = st.slider("Puntuación", 1, 5, 1)
 
         if st.button("Añadir Sitio"):
-            nuevo_sitio = pd.DataFrame([{
-                "nombre": nombre,
-                "etiquetas": etiquetas,
-                "enlace": link,
-                "lat": lat,
-                "lon": lon,
-                "visitado": visitado,
-                "puntuación": puntuacion
-            }])
-            df = pd.concat([df, nuevo_sitio], ignore_index=True)
-            save_data(df)
-            st.success("✅ Sitio añadido correctamente!")
-            st.rerun()
+            if not link or lat is None or lon is None:
+                st.error("No se puede añadir un sitio sin un enlace válido de Google Maps con coordenadas extraídas.")
+            else:
+                nuevo_sitio = pd.DataFrame([{
+                    "nombre": nombre,
+                    "etiquetas": etiquetas_seleccionadas,
+                    "enlace": link,
+                    "lat": lat,
+                    "lon": lon,
+                    "visitado": visitado,
+                    "puntuación": puntuacion
+                }])
+                df_sitios = pd.concat([df_sitios, nuevo_sitio], ignore_index=True)
+                save_data(df_sitios, df_etiquetas)
+                st.success("✅ Sitio añadido correctamente!")
+                st.rerun()
+
+    # Mostrar y editar etiquetas
+    st.subheader("📋 Editar Etiquetas")
+    edited_etiquetas = st.data_editor(df_etiquetas, use_container_width=True)
+    if st.button("Guardar cambios en etiquetas"):
+        df_etiquetas = edited_etiquetas  # Asegurar que los cambios se reflejen en el dataframe principal
+        save_data(df_sitios, df_etiqueta)
+        st.success("✅ Etiquetas actualizadas correctamente!")
+        st.rerun()
 
     # 📋 Editar sitios
     st.subheader("📋 Editar Sitios")
     # Guardamos una copia de las coordenadas antes de eliminarlas
-    lat_lon_data = df[["lat", "lon"]].copy()
+    lat_lon_data = df_sitios[["lat", "lon"]].copy()
     # Crear un DataFrame sin índice y sin las columnas lat/lon
-    df_editable = df.drop(columns=["lat", "lon"], errors="ignore").reset_index(drop=True)
+    df_editable = df_sitios.drop(columns=["lat", "lon"], errors="ignore").reset_index(drop=True)
 
     edited_df = st.data_editor(
         df_editable,
@@ -120,19 +143,23 @@ elif page == "🔑 Admin":
     if st.button("Guardar cambios"):
         # Restaurar las coordenadas antes de guardar
         edited_df = edited_df.merge(lat_lon_data, left_index=True, right_index=True, how="left")
-        save_data(edited_df)
+        df_sitios = edited_df  # Asegurar que es el df principal actualizado
+        save_data(df_sitios, df_etiquetas)
         st.success("✅ Datos guardados correctamente")
         st.rerun()
 
     # 🗑️ Eliminar un sitio
     st.subheader("🗑️ Eliminar un sitio")
-    sitio_a_eliminar = st.selectbox("Selecciona un sitio para eliminar", df["nombre"].tolist())
+    if not df_sitios.empty:
+        sitio_a_eliminar = st.selectbox("Selecciona un sitio para eliminar", df_sitios["nombre"].tolist())
 
-    if st.button("Eliminar sitio"):
-        df = df[df["nombre"] != sitio_a_eliminar]
-        save_data(df)
-        st.success(f"✅ Sitio '{sitio_a_eliminar}' eliminado")
-        st.rerun()
+        if st.button("Eliminar sitio"):
+            df_sitios = df_sitios[df_sitios["nombre"] != sitio_a_eliminar]
+            save_data(df_sitios,df_etiquetas)
+            st.success(f"✅ Sitio '{sitio_a_eliminar}' eliminado")
+            st.rerun()
+    else:
+        st.info("No hay sitios para eliminar.")
 
     # 🔒 Cerrar sesión
     if st.button("Cerrar sesión"):
