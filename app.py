@@ -3,6 +3,7 @@ import folium
 from streamlit_folium import st_folium
 import os
 import pandas as pd
+import numpy as np
 from aux_functions import (
                         load_data, 
                         save_data, 
@@ -34,6 +35,24 @@ if page == "📍 Mapa":
         primer_sitio = sitios.dropna(subset=["lat", "lon"]).iloc[0] if not sitios.dropna(subset=["lat", "lon"]).empty else None
         if primer_sitio is not None:
             location = [primer_sitio["lat"], primer_sitio["lon"]]
+    col1, col2, col3 = st.columns(3)
+    
+    # Filtro de etiquetas arriba del mapa
+    with col1:
+        etiquetas_dict = {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas.to_dict('records')} if isinstance(etiquetas, pd.DataFrame) else {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas} if isinstance(etiquetas, list) and all(isinstance(etiqueta, dict) for etiqueta in etiquetas) else {}
+        etiquetas_seleccionadas = st.multiselect("Filtrar por etiquetas", list(etiquetas_dict.values()))
+    with col2: 
+        puntuacion_minima = st.selectbox("Puntuación mínima", options=[None, 1, 2, 3, 4, 5], index=0, format_func=lambda x: "Sin filtro" if x is None else str(x))
+    with col3:
+        visitado = st.checkbox("Mostrar solo visitados")
+    # Aplicar filtros
+    if etiquetas_seleccionadas:
+        sitios = sitios[sitios["etiquetas"].apply(lambda x: any(tag in x for tag in etiquetas_seleccionadas))]
+    if puntuacion_minima is not None:
+        sitios = sitios[(sitios["puntuación"].notna()) & (sitios["puntuación"] >= puntuacion_minima)]
+    if visitado:
+        sitios = sitios[sitios["visitado"] == True]    
+    
 
     # Crear mapa con Folium
     m = folium.Map(location=location, zoom_start=12)
