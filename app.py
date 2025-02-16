@@ -16,9 +16,16 @@ sitios, etiquetas = load_data()
 # Página de selección
 st.sidebar.title("Navegación")
 page = st.sidebar.radio("Selecciona una página", ["📍 Mapa", "🔑 Admin"])
+st.sidebar.write("")
+st.sidebar.write("")
+st.sidebar.write("")
+st.sidebar.write("")
+st.sidebar.write("")
+st.sidebar.markdown("### Más info en [GitHub](https://github.com/jviosca/CulinaryMap)")
 
 if page == "📍 Mapa":
-    st.title("Sitios de Comida")
+    st.title("CulinaryMap")
+    st.subheader("Recomendaciones culinarias")
 
     # Mapa centrado en una ubicación por defecto (Valencia, España)
     location = [39.4596968, -0.408261]  

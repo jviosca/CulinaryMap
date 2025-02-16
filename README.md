@@ -40,9 +40,8 @@ Deploy and monitor logs for any potential errors.
 ## Technologies Used
 - **Python**: Main programming language.
 - **Streamlit**: For the user interface.
-- **Folium/Leaflet.js**: For map visualization.
-- **Google Maps API**: For navigation.
-- **SQLite / Encrypted JSON**: For data storage.
+- **Folium**: For map visualization.
+- **Encrypted JSON**: For data storage.
 
 ## Contributions
 Contributions are welcome. If you wish to improve the application, fork the repository and submit a pull request.
