@@ -34,11 +34,16 @@ if page == "📍 Mapa":
     # Agregar marcadores de sitios
     for _, sitio in sitios.iterrows():
         if pd.notna(sitio["lat"]) and pd.notna(sitio["lon"]):  # Asegura que lat/lon no sean NaN
+            # Construir el popup dinámicamente
+            popup_text = f"<a href='{sitio.get('enlace', '#')}' target='_blank'>{sitio['nombre']}</a>"
+            # Agregar estrellas solo si la puntuación no es None o NaN
+            if pd.notna(sitio.get("puntuación")):
+                popup_text += f" ({sitio['puntuación']}⭐)"
             folium.Marker(
                 location=[sitio["lat"], sitio["lon"]],
-                popup=f"<a href='{sitio.get('enlace', '#')}' target='_blank'>{sitio['nombre']} ({sitio.get('puntuación', 'N/A')}⭐)</a>",
-                tooltip=sitio["nombre"],
-                icon=folium.Icon(color="blue" if sitio.get("visitado", False) else "gray")
+                popup = popup_text,
+                tooltip = sitio["nombre"],
+                icon = folium.Icon(color="blue" if sitio.get("visitado", False) else "gray")
             ).add_to(m)
 
     # Mostrar el mapa en Streamlit
@@ -91,9 +96,9 @@ elif page == "🔑 Admin":
 
         visitado = st.checkbox("Visitado")
         # Slider de puntuación (solo aparece si el sitio fue visitado)
-        puntuacion = 1  # Por defecto, 1
+        puntuacion = None  # Por defecto, 1
         if visitado:
-            puntuacion = st.slider("Puntuación", 1, 5, 1)
+            puntuacion = st.slider("Puntuación", 1, 5, value=1, step=0.5)
 
         if st.button("Añadir Sitio"):
             if not link or lat is None or lon is None:
@@ -134,11 +139,15 @@ elif page == "🔑 Admin":
         column_config={
             "visitado": st.column_config.CheckboxColumn("Visitado"),
             "puntuación": st.column_config.NumberColumn("Puntuación", min_value=1, max_value=5),
-            "enlace": st.column_config.LinkColumn("Enlace a Google Maps")
+            "enlace": st.column_config.LinkColumn("Enlace a Google Maps", width="small")
         },
         use_container_width=True,
         hide_index=True 
     )
+    # Ajustar puntuación a None si "Visitado" es False
+    for i in range(len(edited_df)):
+        if not edited_df.at[i, "visitado"]:  # Si "visitado" es False
+            edited_df.at[i, "puntuación"] = None  # Poner puntuación en None
 
     if st.button("Guardar cambios"):
         # Restaurar las coordenadas antes de guardar
