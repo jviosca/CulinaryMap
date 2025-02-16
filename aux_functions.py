@@ -122,32 +122,38 @@ def obtener_coordenadas_desde_google_maps(url):
     
     # Paso 1: Si es un enlace corto, resolverlo
     if "maps.app.goo.gl" in url:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://www.google.com/",
+        }
         try:
-            respuesta = requests.get(url, allow_redirects=True)
+            respuesta = requests.get(url, allow_redirects=True, headers = headers)
             url = respuesta.url  # Obtener la URL final
             st.write(f"URL resuelta: {url}")  # Debugging: Verificar URL después de la redirección
         except requests.RequestException as e:
             st.write("Error al resolver URL corta:", e)
             return None
     
-    # Paso 2: Buscar coordenadas en la URL
-    patron = r'@(-?\d+\.\d+),(-?\d+\.\d+)'
-    match = re.search(patron, url)
+    # Paso 2: Buscar coordenadas en la URL con varios patrones
+    patrones = [
+        r'@(-?\d+\.\d+),(-?\d+\.\d+)',             # Formato @lat,lon
+        r'@(-?\d+\.\d+),(-?\d+\.\d+),\d+z',        # Formato @lat,lon,zoomz
+        r'/place/(-?\d+\.\d+),(-?\d+\.\d+)',       # Formato /place/lat,lon
+        r'!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)',         # Formato !3dlat!4dlon
+        r'q=(-?\d+\.\d+),(-?\d+\.\d+)',            # Formato q=lat,lon
+        r'll=(-?\d+\.\d+),(-?\d+\.\d+)',           # Formato ll=lat,lon
+        r'daddr=(-?\d+\.\d+),(-?\d+\.\d+)',        # Formato daddr=lat,lon (destino en rutas)
+        r'center=(-?\d+\.\d+),(-?\d+\.\d+)',       # Formato center=lat,lon (mapa estático)
+        r'markers=(-?\d+\.\d+),(-?\d+\.\d+)',      # Formato markers=lat,lon
+    ]
     
-    if match:
-        lat, lon = float(match.group(1)), float(match.group(2))
-        st.write(f"Coordenadas encontradas con el primer patrón: {lat}, {lon}")  # Debugging
-        return lat, lon
+    for i, patron in enumerate(patrones):
+        match = re.search(patron, url)
+        if match:
+            lat, lon = float(match.group(1)), float(match.group(2))
+            st.write(f"Coordenadas encontradas con el patrón {i + 1}: {lat}, {lon}")  # Debugging
+            return lat, lon
     
-    # Alternativa para otra estructura de URL
-    patron_alt = r'/place/(-?\d+\.\d+),(-?\d+\.\d+)'
-    match_alt = re.search(patron_alt, url)
-    
-    if match_alt:
-        lat, lon = float(match_alt.group(1)), float(match_alt.group(2))
-        st.write(f"Coordenadas encontradas con el segundo patrón: {lat}, {lon}")  # Debugging
-        return lat, lon
-    
-    st.write("No se encontraron coordenadas en la URL.")  # Debugging: Caso en que no se encuentran coordenadas
+    st.warning("No se encontraron coordenadas en la URL.")  # Debugging: Caso en que no se encuentran coordenadas
     return None
 

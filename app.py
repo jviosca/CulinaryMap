@@ -35,7 +35,7 @@ if page == "📍 Mapa":
     for _, sitio in sitios.iterrows():
         if pd.notna(sitio["lat"]) and pd.notna(sitio["lon"]):  # Asegura que lat/lon no sean NaN
             # Construir el popup dinámicamente
-            popup_text = f"<a href='{sitio.get('enlace', '#')}' target='_blank'>{sitio['nombre']}</a>"
+            popup_text = f"<a href='{sitio.get('ubicación', '#')}' target='_blank'>{sitio['nombre']}</a>"
             # Agregar estrellas solo si la puntuación no es None o NaN
             if pd.notna(sitio.get("puntuación")):
                 popup_text += f" ({sitio['puntuación']}⭐)"
@@ -110,7 +110,7 @@ elif page == "🔑 Admin":
                 nuevo_sitio = pd.DataFrame([{
                     "nombre": nombre,
                     "etiquetas": etiquetas_seleccionadas,
-                    "enlace": map_link,
+                    "ubicación": map_link,
                     "web": web,
                     "lat": lat,
                     "lon": lon,
