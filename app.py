@@ -13,8 +13,17 @@ from aux_functions import (
                         obtener_coordenadas_desde_google_maps
 )
 
+st.set_page_config(
+    page_title="CulinaryMap",  # Título de la pestaña en el navegador
+    page_icon="🍽️",  # Icono de la pestaña
+    layout="wide",  # Configuración amplia
+    initial_sidebar_state="expanded"  # Barra lateral expandida por defecto
+)
+
 # Cargar datos
 sitios, etiquetas = load_data()
+sitios = sitios.sort_values(by="nombre", ascending=True)
+etiquetas = etiquetas.sort_values(by="nombre", ascending=True)
 
 # Página de selección
 st.sidebar.title("Navegación")
@@ -146,7 +155,7 @@ if page == "📍 Mapa":
             ).add_to(m)
 
     # Mostrar el mapa en Streamlit
-    st_folium(m, width=700, height=500)
+    st_folium(m, width='100%')
 
 
 elif page == "🔑 Admin":
@@ -165,7 +174,9 @@ elif page == "🔑 Admin":
     st.title("🔑 Administración de Sitios")
     st.success("¡Acceso concedido!")
     
-    df_sitios, df_etiquetas = load_data()
+    #df_sitios, df_etiquetas = load_data()
+    df_sitios = sitios
+    df_etiquetas = etiquetas
 
     # ➕ Agregar una etiqueta
     with st.expander("➕ Agregar una nueva etiqueta"):
@@ -176,6 +187,7 @@ elif page == "🔑 Admin":
             df_etiquetas = pd.concat([df_etiquetas, nueva_etiqueta], ignore_index=True)
             save_data(df_sitios, df_etiquetas)
             st.success("✅ Etiqueta añadida correctamente!")
+            time.sleep(1)
             st.rerun()
     
     # ➕ Agregar un nuevo sitio
@@ -217,35 +229,40 @@ elif page == "🔑 Admin":
                 df_sitios = pd.concat([df_sitios, nuevo_sitio], ignore_index=True)
                 save_data(df_sitios, df_etiquetas)
                 st.success("✅ Sitio añadido correctamente!")
+                time.sleep(1)
                 st.rerun()
 
     # Mostrar y editar etiquetas
     with st.expander("📋 Editar Etiquetas"):
-        edited_etiquetas = st.data_editor(df_etiquetas.reset_index(drop=True), use_container_width=True, hide_index=True)
+        id_data = df_etiquetas[["id"]].copy()
+        df_etiquetas_editable = df_etiquetas.drop(columns=["id"], errors="ignore").reset_index(drop=True)
+        edited_etiquetas = st.data_editor(df_etiquetas_editable, use_container_width=True, hide_index=True)
         if st.button("Guardar cambios en etiquetas"):
+            edited_etiquetas = edited_etiquetas.merge(id_data, left_index=True, right_index=True, how="left")
             df_etiquetas = edited_etiquetas  # Asegurar que los cambios se reflejen en el dataframe principal
-            save_data(df_sitios, df_etiqueta)
+            save_data(df_sitios, df_etiquetas)
             st.success("✅ Etiquetas actualizadas correctamente!")
+            time.sleep(1)
             st.rerun()
 
     # 📋 Editar sitios
-    with st.expander("📋 Editar Sitios"):
+    with st.expander("📋 Editar Sitios (excepto etiquetas)"):
         # Guardamos una copia de las coordenadas antes de eliminarlas
         lat_lon_data = df_sitios[["lat", "lon"]].copy()
         # Crear un DataFrame sin índice y sin las columnas lat/lon
         df_editable = df_sitios.drop(columns=["lat", "lon"], errors="ignore").reset_index(drop=True)
-
         edited_df = st.data_editor(
             df_editable,
             column_config={
                 "visitado": st.column_config.CheckboxColumn("Visitado"),
                 "puntuación": st.column_config.NumberColumn("Puntuación", min_value=1, max_value=5),
                 "ubicación": st.column_config.LinkColumn("Enlace a Google Maps", width="small"),
-                "web": st.column_config.LinkColumn("Web del Sitio", width="small") 
+                "web": st.column_config.LinkColumn("Web del Sitio", width="small")
             },
             use_container_width=True,
             hide_index=True 
         )
+        
         # Ajustar puntuación a None si "Visitado" es False
         for i in range(len(edited_df)):
             if not edited_df.at[i, "visitado"]:  # Si "visitado" es False
@@ -257,6 +274,35 @@ elif page == "🔑 Admin":
             df_sitios = edited_df  # Asegurar que es el df principal actualizado
             save_data(df_sitios, df_etiquetas)
             st.success("✅ Datos guardados correctamente")
+            time.sleep(1)
+            st.rerun()
+
+    # 📋 Editar etiquetas de un sitio específico
+    with st.expander("📝 Editar Etiquetas de un Sitio"):
+        # Selector de sitio
+        sitio_nombres = df_sitios["nombre"].tolist()
+        sitio_seleccionado = st.selectbox("Selecciona un sitio para editar sus etiquetas:", sitio_nombres)
+
+        # Obtener las etiquetas actuales del sitio seleccionado
+        sitio_index = df_sitios[df_sitios["nombre"] == sitio_seleccionado].index[0]  # Obtener el sitio como Series
+        etiquetas_actuales = df_sitios.at[sitio_index, "etiquetas"] if isinstance(df_sitios.at[sitio_index, "etiquetas"], list) else []
+
+        # Obtener todas las etiquetas disponibles
+        etiquetas_disponibles = df_etiquetas["nombre"].tolist()
+
+        # Multiselect para editar etiquetas del sitio seleccionado
+        etiquetas_editadas = st.multiselect(
+            "Selecciona las etiquetas para este sitio:",
+            options=etiquetas_disponibles,
+            default=etiquetas_actuales
+        )
+
+        if st.button("Guardar etiquetas del sitio"):
+            # Actualizar el DataFrame con las nuevas etiquetas
+            df_sitios.at[sitio_index, "etiquetas"] = etiquetas_editadas
+            save_data(df_sitios, df_etiquetas)  # Guardar cambios
+            st.success(f"✅ Etiquetas actualizadas para {sitio_seleccionado}")
+            time.sleep(1)
             st.rerun()
 
     # 🗑️ Eliminar un sitio
@@ -268,6 +314,7 @@ elif page == "🔑 Admin":
                 df_sitios = df_sitios[df_sitios["nombre"] != sitio_a_eliminar]
                 save_data(df_sitios,df_etiquetas)
                 st.success(f"✅ Sitio '{sitio_a_eliminar}' eliminado")
+                time.sleep(1)
                 st.rerun()
         else:
             st.info("No hay sitios para eliminar.")
