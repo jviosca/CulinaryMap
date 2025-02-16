@@ -44,3 +44,4 @@ tzdata
 urllib3
 watchdog
 wcwidth==0.2.6
+cryptography
