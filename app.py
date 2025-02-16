@@ -104,7 +104,7 @@ elif page == "🔑 Admin":
             puntuacion = st.slider("Puntuación", 1, 5, value=1, step=0.5)
 
         if st.button("Añadir Sitio"):
-            if not link or lat is None or lon is None:
+            if not map_link or lat is None or lon is None:
                 st.error("No se puede añadir un sitio sin un enlace válido de Google Maps con coordenadas extraídas.")
             else:
                 nuevo_sitio = pd.DataFrame([{
