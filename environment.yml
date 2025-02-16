@@ -16,3 +16,4 @@ dependencies:
   - pip:
       - streamlit-folium
       - toml
+      - streamlit-geolocation
