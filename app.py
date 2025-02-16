@@ -220,57 +220,57 @@ elif page == "🔑 Admin":
                 st.rerun()
 
     # Mostrar y editar etiquetas
-    st.subheader("📋 Editar Etiquetas")
-    edited_etiquetas = st.data_editor(df_etiquetas.reset_index(drop=True), use_container_width=True, hide_index=True)
-    if st.button("Guardar cambios en etiquetas"):
-        df_etiquetas = edited_etiquetas  # Asegurar que los cambios se reflejen en el dataframe principal
-        save_data(df_sitios, df_etiqueta)
-        st.success("✅ Etiquetas actualizadas correctamente!")
-        st.rerun()
+    with st.expander("📋 Editar Etiquetas"):
+        edited_etiquetas = st.data_editor(df_etiquetas.reset_index(drop=True), use_container_width=True, hide_index=True)
+        if st.button("Guardar cambios en etiquetas"):
+            df_etiquetas = edited_etiquetas  # Asegurar que los cambios se reflejen en el dataframe principal
+            save_data(df_sitios, df_etiqueta)
+            st.success("✅ Etiquetas actualizadas correctamente!")
+            st.rerun()
 
     # 📋 Editar sitios
-    st.subheader("📋 Editar Sitios")
-    # Guardamos una copia de las coordenadas antes de eliminarlas
-    lat_lon_data = df_sitios[["lat", "lon"]].copy()
-    # Crear un DataFrame sin índice y sin las columnas lat/lon
-    df_editable = df_sitios.drop(columns=["lat", "lon"], errors="ignore").reset_index(drop=True)
+    with st.expander("📋 Editar Sitios"):
+        # Guardamos una copia de las coordenadas antes de eliminarlas
+        lat_lon_data = df_sitios[["lat", "lon"]].copy()
+        # Crear un DataFrame sin índice y sin las columnas lat/lon
+        df_editable = df_sitios.drop(columns=["lat", "lon"], errors="ignore").reset_index(drop=True)
 
-    edited_df = st.data_editor(
-        df_editable,
-        column_config={
-            "visitado": st.column_config.CheckboxColumn("Visitado"),
-            "puntuación": st.column_config.NumberColumn("Puntuación", min_value=1, max_value=5),
-            "ubicación": st.column_config.LinkColumn("Enlace a Google Maps", width="small"),
-            "web": st.column_config.LinkColumn("Web del Sitio", width="small") 
-        },
-        use_container_width=True,
-        hide_index=True 
-    )
-    # Ajustar puntuación a None si "Visitado" es False
-    for i in range(len(edited_df)):
-        if not edited_df.at[i, "visitado"]:  # Si "visitado" es False
-            edited_df.at[i, "puntuación"] = None  # Poner puntuación en None
+        edited_df = st.data_editor(
+            df_editable,
+            column_config={
+                "visitado": st.column_config.CheckboxColumn("Visitado"),
+                "puntuación": st.column_config.NumberColumn("Puntuación", min_value=1, max_value=5),
+                "ubicación": st.column_config.LinkColumn("Enlace a Google Maps", width="small"),
+                "web": st.column_config.LinkColumn("Web del Sitio", width="small") 
+            },
+            use_container_width=True,
+            hide_index=True 
+        )
+        # Ajustar puntuación a None si "Visitado" es False
+        for i in range(len(edited_df)):
+            if not edited_df.at[i, "visitado"]:  # Si "visitado" es False
+                edited_df.at[i, "puntuación"] = None  # Poner puntuación en None
 
-    if st.button("Guardar cambios"):
-        # Restaurar las coordenadas antes de guardar
-        edited_df = edited_df.merge(lat_lon_data, left_index=True, right_index=True, how="left")
-        df_sitios = edited_df  # Asegurar que es el df principal actualizado
-        save_data(df_sitios, df_etiquetas)
-        st.success("✅ Datos guardados correctamente")
-        st.rerun()
+        if st.button("Guardar cambios"):
+            # Restaurar las coordenadas antes de guardar
+            edited_df = edited_df.merge(lat_lon_data, left_index=True, right_index=True, how="left")
+            df_sitios = edited_df  # Asegurar que es el df principal actualizado
+            save_data(df_sitios, df_etiquetas)
+            st.success("✅ Datos guardados correctamente")
+            st.rerun()
 
     # 🗑️ Eliminar un sitio
-    st.subheader("🗑️ Eliminar un sitio")
-    if not df_sitios.empty:
-        sitio_a_eliminar = st.selectbox("Selecciona un sitio para eliminar", df_sitios["nombre"].tolist())
+    with st.expander("🗑️ Eliminar un sitio"):
+        if not df_sitios.empty:
+            sitio_a_eliminar = st.selectbox("Selecciona un sitio para eliminar", df_sitios["nombre"].tolist())
 
-        if st.button("Eliminar sitio"):
-            df_sitios = df_sitios[df_sitios["nombre"] != sitio_a_eliminar]
-            save_data(df_sitios,df_etiquetas)
-            st.success(f"✅ Sitio '{sitio_a_eliminar}' eliminado")
-            st.rerun()
-    else:
-        st.info("No hay sitios para eliminar.")
+            if st.button("Eliminar sitio"):
+                df_sitios = df_sitios[df_sitios["nombre"] != sitio_a_eliminar]
+                save_data(df_sitios,df_etiquetas)
+                st.success(f"✅ Sitio '{sitio_a_eliminar}' eliminado")
+                st.rerun()
+        else:
+            st.info("No hay sitios para eliminar.")
 
     # 🔒 Cerrar sesión
     if st.button("Cerrar sesión"):
