@@ -156,4 +156,3 @@ def obtener_coordenadas_desde_google_maps(url):
     
     st.warning("No se encontraron coordenadas en la URL.")  # Debugging: Caso en que no se encuentran coordenadas
     return None
-

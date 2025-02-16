@@ -4,6 +4,8 @@ from streamlit_folium import st_folium
 import os
 import pandas as pd
 import numpy as np
+from streamlit_js_eval import get_geolocation
+import time
 from aux_functions import (
                         load_data, 
                         save_data, 
@@ -27,17 +29,86 @@ st.sidebar.markdown("### Más info en [GitHub](https://github.com/jviosca/Culina
 if page == "📍 Mapa":
     st.title("CulinaryMap")
     st.subheader("Recomendaciones culinarias")
+    
+    # Checkbox para mostrar ubicación del usuario
+    mostrar_mi_ubicacion = st.checkbox("📍 Mostrar mi ubicación", value=False)
+    
+    # Obtener geolocalización solo si el usuario lo activa y aún no la tenemos
+    if mostrar_mi_ubicacion:
+        if "user_location" not in st.session_state or st.session_state["user_location"] is None:
+            ubicacion = get_geolocation()
+
+            # Mostrar la ubicación obtenida para depuración
+            #st.write("📍 Datos obtenidos de get_geolocation():", ubicacion)
+
+            # Extraer coordenadas correctamente desde "coords"
+            try:
+                if (
+                    ubicacion 
+                    and "coords" in ubicacion
+                    and "latitude" in ubicacion["coords"]
+                    and "longitude" in ubicacion["coords"]
+                ):
+                    st.session_state["user_location"] = [
+                        ubicacion["coords"]["latitude"],
+                        ubicacion["coords"]["longitude"],
+                    ]
+                    st.success("✅ Ubicación obtenida correctamente.")
+                else:
+                    st.warning("⏳ Obteniendo ubicación... Si tarda demasiado, revisa los permisos del navegador.")
+            except Exception as e:
+                st.error(f"❌ Error obteniendo la ubicación: {e}")
+            time.sleep(1)
 
     # Mapa centrado en una ubicación por defecto (Valencia, España)
-    location = [39.4596968, -0.408261]  
-    
-    if not sitios.empty:
-        primer_sitio = sitios.dropna(subset=["lat", "lon"]).iloc[0] if not sitios.dropna(subset=["lat", "lon"]).empty else None
+    if "selected_location" not in st.session_state:
+        # Filtrar solo los sitios con latitud y longitud válidas
+        sitios_validos = sitios.dropna(subset=["lat", "lon"])
+
+        # Seleccionar un sitio aleatorio válido
+        primer_sitio = None
+        max_intentos = 10
+
+        for _ in range(max_intentos):
+            if not sitios_validos.empty:
+                posible_sitio = sitios_validos.sample(n=1).iloc[0]
+                if not pd.isna(posible_sitio["lat"]) and not pd.isna(posible_sitio["lon"]):
+                    primer_sitio = posible_sitio
+                    break  # Se encontró un sitio válido
+
+        # Guardar la ubicación en session_state para que no cambie al recargar la interfaz
         if primer_sitio is not None:
-            location = [primer_sitio["lat"], primer_sitio["lon"]]
-    col1, col2, col3 = st.columns(3)
+            st.session_state["selected_location"] = {
+                "lat": primer_sitio["lat"],
+                "lon": primer_sitio["lon"],
+                "nombre": primer_sitio["nombre"]
+            }
+        else:
+            st.session_state["selected_location"] = {
+                "lat": 39.4699,  # Valencia, España
+                "lon": -0.3763,
+                "nombre": "Ubicación por defecto"
+            }
+
+    # Determinar la ubicación del mapa
+    if mostrar_mi_ubicacion and "user_location" in st.session_state and st.session_state["user_location"] is not None:
+        centro_mapa = st.session_state["user_location"]
+    elif not mostrar_mi_ubicacion:
+        centro_mapa = [
+            st.session_state["selected_location"]["lat"],
+            st.session_state["selected_location"]["lon"],
+        ]
+    else:
+        st.warning("⚠️ No se pudo obtener la ubicación. Inténtalo de nuevo.")
+        centro_mapa = [
+            st.session_state["selected_location"]["lat"],
+            st.session_state["selected_location"]["lon"],
+        ]
+
+ 
     
     # Filtro de etiquetas arriba del mapa
+    col1, col2, col3 = st.columns(3)
     with col1:
         etiquetas_dict = {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas.to_dict('records')} if isinstance(etiquetas, pd.DataFrame) else {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas} if isinstance(etiquetas, list) and all(isinstance(etiqueta, dict) for etiqueta in etiquetas) else {}
         etiquetas_seleccionadas = st.multiselect("Filtrar por etiquetas", list(etiquetas_dict.values()))
@@ -54,8 +125,8 @@ if page == "📍 Mapa":
         sitios = sitios[sitios["visitado"] == True]    
     
 
-    # Crear mapa con Folium
-    m = folium.Map(location=location, zoom_start=12)
+    # Crear el mapa con Folium
+    m = folium.Map(location=centro_mapa, zoom_start=13)   
 
     # Agregar marcadores de sitios
     for _, sitio in sitios.iterrows():
@@ -66,7 +137,7 @@ if page == "📍 Mapa":
             if pd.notna(sitio.get("puntuación")):
                 popup_text += f" ({sitio['puntuación']}⭐)"
             if pd.notna(sitio.get("web")):
-                popup_text += f"<a href='{sitio.get('web', '#')}' target='_blank'>{sitio['web']}</a>"
+                popup_text += f"\n<a href='{sitio.get('web', '#')}' target='_blank'>{sitio['web']}</a>"
             folium.Marker(
                 location=[sitio["lat"], sitio["lon"]],
                 popup = popup_text,
@@ -127,7 +198,7 @@ elif page == "🔑 Admin":
         # Slider de puntuación (solo aparece si el sitio fue visitado)
         puntuacion = None  # Por defecto, 1
         if visitado:
-            puntuacion = st.slider("Puntuación", 1, 5, value=1, step=0.5)
+            puntuacion = st.slider("Puntuación", 1, 5, value=1, step=1)
 
         if st.button("Añadir Sitio"):
             if not map_link or lat is None or lon is None:
