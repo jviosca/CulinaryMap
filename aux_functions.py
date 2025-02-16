@@ -57,60 +57,88 @@ def authenticate():
     else:
         st.error("Contraseña incorrecta. Intenta nuevamente.")
 
-def load_data_old():
-    try:
-        with open("sitios.json", "rb") as file:
-            encrypted_data = file.read()
-        decrypted_data = FERNET.decrypt(encrypted_data).decode()
-        df = pd.DataFrame(json.loads(decrypted_data))
-
-        # ✅ Asegurar que la columna "ubicación" y otras siempre existan
-        for col in ["nombre", "etiquetas", "ubicación","web", "lat", "lon", "visitado", "puntuación"]:
-            if col not in df.columns:
-                df[col] = "" if col == "ubicación" else None  # Valor por defecto
-
-        return df
-    except (FileNotFoundError, json.JSONDecodeError):
-        return pd.DataFrame(columns=["nombre", "etiquetas", "ubicación","web", "lat", "lon", "visitado", "puntuación"])
 
 def load_data():
     try:
         with open("sitios.json", "rb") as file:
             encrypted_data = file.read()
         decrypted_data = json.loads(FERNET.decrypt(encrypted_data).decode())
-        # Convertir a DataFrame y asegurarse de que todas las columnas existen
+
         df_sitios = pd.DataFrame(decrypted_data.get("sitios", []))
         df_etiquetas = pd.DataFrame(decrypted_data.get("etiquetas", []))
-        
-        # Garantizar que ambas tablas tengan las columnas correctas
-        sitios_columnas = ["nombre", "etiquetas", "ubicación","web", "lat", "lon", "visitado", "puntuación"]
-        etiquetas_columnas = ["id", "nombre", "descripcion"]
 
-        for col in sitios_columnas:
-            if col not in df_sitios.columns:
-                df_sitios[col] = None  # Asigna None a las columnas faltantes
+        # Asegurar que la columna `id` es un número entero y no NULL
+        if "id" not in df_etiquetas.columns or df_etiquetas["id"].isnull().all():
+            df_etiquetas["id"] = pd.Series(range(1, len(df_etiquetas) + 1))
+        else:
+            df_etiquetas["id"] = pd.to_numeric(df_etiquetas["id"], errors="coerce").fillna(
+                pd.Series(range(1, len(df_etiquetas) + 1))
+            ).astype(int)
 
-        for col in etiquetas_columnas:
-            if col not in df_etiquetas.columns:
-                df_etiquetas[col] = "" if col == "nombre" else None  # La columna "nombre" no puede ser None
+        # 🔍 Verificación de datos corregidos
+        #st.write("🚀 Etiquetas después de cargar (con IDs corregidos):", df_etiquetas.to_dict("records"))
 
         return df_sitios, df_etiquetas
 
-    except (FileNotFoundError, json.JSONDecodeError):
-        return pd.DataFrame(columns=sitios_columnas), pd.DataFrame(columns=etiquetas_columnas)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        st.error(f"Error cargando los datos: {e}")
+        return pd.DataFrame(columns=["nombre", "etiquetas", "ubicación", "web", "lat", "lon", "visitado", "puntuación"]), \
+               pd.DataFrame(columns=["id", "nombre", "descripcion"])
+
 
 # 🔐 Función para encriptar y guardar datos
-def save_data_old(df):
-    data = df.to_dict(orient="records")
+def save_data(df_sitios, df_etiquetas):
+    # 🛠️ Asegurar que las etiquetas tengan un id único antes de guardar
+    if "id" not in df_etiquetas.columns:
+        df_etiquetas["id"] = range(1, len(df_etiquetas) + 1)
+    else:
+        df_etiquetas["id"] = df_etiquetas["id"].fillna(pd.Series(range(1, len(df_etiquetas) + 1)))
+
+    # Asegurar que etiquetas en `df_sitios` sean listas
+    df_sitios["etiquetas"] = df_sitios["etiquetas"].apply(
+        lambda x: x if isinstance(x, list) else []
+    )
+
+    # 🔍 Depuración: Verificar qué datos se guardarán
+    #st.write("🔍 Datos a guardar en sitios.json:", df_sitios.to_dict(orient="records"))
+    #st.write("🔍 Datos a guardar en etiquetas.json:", df_etiquetas.to_dict(orient="records"))
+
+    data = {
+        "sitios": df_sitios.to_dict(orient="records"),
+        "etiquetas": df_etiquetas.to_dict(orient="records")
+    }
+
     encrypted_data = FERNET.encrypt(json.dumps(data, indent=4, ensure_ascii=False).encode())
     with open("sitios.json", "wb") as file:
         file.write(encrypted_data)
 
-def save_data(df_sitios, df_etiquetas):
-    data = {"sitios": df_sitios.to_dict(orient="records"), "etiquetas": df_etiquetas.to_dict(orient="records")}
-    encrypted_data = FERNET.encrypt(json.dumps(data, indent=4, ensure_ascii=False).encode())
-    with open("sitios.json", "wb") as file:
-        file.write(encrypted_data)
+
+def reparar_datos_guardados():
+    try:
+        with open("sitios.json", "rb") as file:
+            encrypted_data = file.read()
+        decrypted_data = json.loads(FERNET.decrypt(encrypted_data).decode())
+
+        df_sitios = pd.DataFrame(decrypted_data.get("sitios", []))
+        df_etiquetas = pd.DataFrame(decrypted_data.get("etiquetas", []))
+
+        # 🛠️ Reparar IDs en `df_etiquetas`
+        if "id" not in df_etiquetas.columns or df_etiquetas["id"].isnull().all():
+            df_etiquetas["id"] = range(1, len(df_etiquetas) + 1)
+        else:
+            df_etiquetas["id"] = pd.to_numeric(df_etiquetas["id"], errors="coerce").fillna(range(1, len(df_etiquetas) + 1)).astype(int)
+
+        # 🔍 Verificar cambios
+        st.write("✅ Datos corregidos en etiquetas:", df_etiquetas.to_dict("records"))
+
+        # Volver a guardar los datos reparados
+        save_data(df_sitios, df_etiquetas)
+        st.success("✅ Datos en sitios.json reparados con éxito!")
+
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        st.error(f"Error al intentar reparar datos: {e}")
+
+
 
 def obtener_coordenadas_desde_google_maps(url):
     """

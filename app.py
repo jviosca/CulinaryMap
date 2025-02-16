@@ -10,7 +10,8 @@ from aux_functions import (
                         load_data, 
                         save_data, 
                         authenticate,
-                        obtener_coordenadas_desde_google_maps
+                        obtener_coordenadas_desde_google_maps,
+                        reparar_datos_guardados
 )
 
 st.set_page_config(
@@ -19,6 +20,9 @@ st.set_page_config(
     layout="wide",  # Configuración amplia
     initial_sidebar_state="expanded"  # Barra lateral expandida por defecto
 )
+
+#if st.button("🔄 Reparar datos guardados"): # si etiquetas no tienen id, no se muestran todas
+#    reparar_datos_guardados()
 
 # Cargar datos
 sitios, etiquetas = load_data()
@@ -119,7 +123,14 @@ if page == "📍 Mapa":
     # Filtro de etiquetas arriba del mapa
     col1, col2, col3 = st.columns(3)
     with col1:
-        etiquetas_dict = {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas.to_dict('records')} if isinstance(etiquetas, pd.DataFrame) else {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas} if isinstance(etiquetas, list) and all(isinstance(etiqueta, dict) for etiqueta in etiquetas) else {}
+        #etiquetas_dict = {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas.to_dict('records')} if isinstance(etiquetas, pd.DataFrame) else {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas} if isinstance(etiquetas, list) and all(isinstance(etiqueta, dict) for etiqueta in etiquetas) else {}
+        if isinstance(etiquetas, pd.DataFrame):
+            etiquetas_dict = {etiqueta["id"]: etiqueta["nombre"] for etiqueta in etiquetas.to_dict("records")}
+        elif isinstance(etiquetas, list) and all(isinstance(etiqueta, dict) for etiqueta in etiquetas):
+            etiquetas_dict = {etiqueta["id"]: etiqueta["nombre"] for etiqueta in etiquetas}
+        else:
+            etiquetas_dict = {}
+        #st.write("Etiquetas disponibles en el filtro:", etiquetas_dict)
         etiquetas_seleccionadas = st.multiselect("Filtrar por etiquetas", list(etiquetas_dict.values()))
     with col2: 
         puntuacion_minima = st.selectbox("Puntuación mínima", options=[None, 1, 2, 3, 4, 5], index=0, format_func=lambda x: "Sin filtro" if x is None else str(x))
@@ -127,7 +138,8 @@ if page == "📍 Mapa":
         visitado = st.checkbox("Mostrar solo visitados")
     # Aplicar filtros
     if etiquetas_seleccionadas:
-        sitios = sitios[sitios["etiquetas"].apply(lambda x: any(tag in x for tag in etiquetas_seleccionadas))]
+        #sitios = sitios[sitios["etiquetas"].apply(lambda x: any(tag in x for tag in etiquetas_seleccionadas))]
+        sitios = sitios[sitios["etiquetas"].apply(lambda x: isinstance(x, list) and any(tag in x for tag in etiquetas_seleccionadas))]
     if puntuacion_minima is not None:
         sitios = sitios[(sitios["puntuación"].notna()) & (sitios["puntuación"] >= puntuacion_minima)]
     if visitado:
