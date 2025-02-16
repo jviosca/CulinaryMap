@@ -18,7 +18,7 @@ st.sidebar.title("Navegación")
 page = st.sidebar.radio("Selecciona una página", ["📍 Mapa", "🔑 Admin"])
 
 if page == "📍 Mapa":
-    st.title("Mapa de Sitios de Comida")
+    st.title("Sitios de Comida")
 
     # Mapa centrado en una ubicación por defecto (Valencia, España)
     location = [39.4596968, -0.408261]  
@@ -39,6 +39,8 @@ if page == "📍 Mapa":
             # Agregar estrellas solo si la puntuación no es None o NaN
             if pd.notna(sitio.get("puntuación")):
                 popup_text += f" ({sitio['puntuación']}⭐)"
+            if pd.notna(sitio.get("web")):
+                popup_text += f"<a href='{sitio.get('web', '#')}' target='_blank'>{sitio['web']}</a>"
             folium.Marker(
                 location=[sitio["lat"], sitio["lon"]],
                 popup = popup_text,
@@ -83,11 +85,12 @@ elif page == "🔑 Admin":
     with st.expander("➕ Agregar un nuevo sitio"):
         nombre = st.text_input("Nombre del sitio")
         etiquetas_seleccionadas = st.multiselect("Etiquetas", df_etiquetas["nombre"].tolist())
-        link = st.text_input("Enlace de Google Maps", key="link")
+        map_link = st.text_input("Enlace de Google Maps", key="link")
+        web = st.text_input("Web del Sitio (opcional)")
         lat, lon = None, None
 
-        if link:
-            coordenadas = obtener_coordenadas_desde_google_maps(link)
+        if map_link:
+            coordenadas = obtener_coordenadas_desde_google_maps(map_link)
             if coordenadas:
                 lat, lon = coordenadas
                 st.success(f"Coordenadas extraídas: 🌍 Latitud: {lat}, Longitud: {lon}")
@@ -107,7 +110,8 @@ elif page == "🔑 Admin":
                 nuevo_sitio = pd.DataFrame([{
                     "nombre": nombre,
                     "etiquetas": etiquetas_seleccionadas,
-                    "enlace": link,
+                    "enlace": map_link,
+                    "web": web,
                     "lat": lat,
                     "lon": lon,
                     "visitado": visitado,
@@ -139,7 +143,8 @@ elif page == "🔑 Admin":
         column_config={
             "visitado": st.column_config.CheckboxColumn("Visitado"),
             "puntuación": st.column_config.NumberColumn("Puntuación", min_value=1, max_value=5),
-            "enlace": st.column_config.LinkColumn("Enlace a Google Maps", width="small")
+            "ubicación": st.column_config.LinkColumn("Enlace a Google Maps", width="small"),
+            "web": st.column_config.LinkColumn("Web del Sitio", width="small") 
         },
         use_container_width=True,
         hide_index=True 

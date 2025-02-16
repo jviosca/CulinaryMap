@@ -64,14 +64,14 @@ def load_data_old():
         decrypted_data = FERNET.decrypt(encrypted_data).decode()
         df = pd.DataFrame(json.loads(decrypted_data))
 
-        # ✅ Asegurar que la columna "enlace" y otras siempre existan
-        for col in ["nombre", "etiquetas", "enlace", "lat", "lon", "visitado", "puntuación"]:
+        # ✅ Asegurar que la columna "ubicación" y otras siempre existan
+        for col in ["nombre", "etiquetas", "ubicación","web", "lat", "lon", "visitado", "puntuación"]:
             if col not in df.columns:
-                df[col] = "" if col == "enlace" else None  # Valor por defecto
+                df[col] = "" if col == "ubicación" else None  # Valor por defecto
 
         return df
     except (FileNotFoundError, json.JSONDecodeError):
-        return pd.DataFrame(columns=["nombre", "etiquetas", "enlace", "lat", "lon", "visitado", "puntuación"])
+        return pd.DataFrame(columns=["nombre", "etiquetas", "ubicación","web", "lat", "lon", "visitado", "puntuación"])
 
 def load_data():
     try:
@@ -83,7 +83,7 @@ def load_data():
         df_etiquetas = pd.DataFrame(decrypted_data.get("etiquetas", []))
         
         # Garantizar que ambas tablas tengan las columnas correctas
-        sitios_columnas = ["nombre", "etiquetas", "enlace", "lat", "lon", "visitado", "puntuación"]
+        sitios_columnas = ["nombre", "etiquetas", "ubicación","web", "lat", "lon", "visitado", "puntuación"]
         etiquetas_columnas = ["id", "nombre", "descripcion"]
 
         for col in sitios_columnas:

@@ -2,3 +2,5 @@
 /.streamlit
 /__pycache__
 regenerar_json_vacio.py
+sitios_clickup.xlsx
+clickup_tasks_labels.ipynb
