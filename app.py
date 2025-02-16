@@ -147,6 +147,10 @@ if page == "📍 Mapa":
                 popup_text += f" ({sitio['puntuación']}⭐)"
             if pd.notna(sitio.get("web")):
                 popup_text += f"\n<a href='{sitio.get('web', '#')}' target='_blank'>{sitio['web']}</a>"
+            # Agregar etiquetas si existen
+            if isinstance(sitio.get("etiquetas"), list) and len(sitio["etiquetas"]) > 0:
+                etiquetas_text = ", ".join(etq.strip() for etq in sitio["etiquetas"] if isinstance(etq, str))
+                popup_text += f"<br>🏷️ {etiquetas_text}"
             folium.Marker(
                 location=[sitio["lat"], sitio["lon"]],
                 popup = popup_text,
