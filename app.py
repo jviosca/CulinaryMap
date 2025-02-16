@@ -151,7 +151,8 @@ if page == "📍 Mapa":
     # Aplicar filtro de búsqueda en el nombre del sitio
     if busqueda:
         sitios = sitios[sitios["nombre"].str.contains(busqueda, case=False, na=False)]
-        centro_mapa = [sitios.iloc[0]["lat"], sitios.iloc[0]["lon"]]
+        if not sitios.empty:
+            centro_mapa = [sitios.iloc[0]["lat"], sitios.iloc[0]["lon"]]
 
     # Mostrar cuántos sitios coinciden con la búsqueda
     st.write(f"Resultados encontrados: {len(sitios)}")

@@ -146,10 +146,10 @@ def obtener_coordenadas_desde_google_maps(url):
     Soporta enlaces largos y cortos de la app móvil.
     """
     
-    print(f"URL de entrada: {url}")  # Debugging: Verificar URL de entrada
+    st.write(f"URL de entrada: {url}")  # Debugging: Verificar URL de entrada
     
     # Paso 1: Si es un enlace corto, resolverlo
-    if "maps.app.goo.gl" in url or "goo.gl/maps" in url:
+    if "maps.app.goo.gl" in url or "goo.gl/maps" in url or "g.co/kgs" in url:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Referer": "https://www.google.com/",
