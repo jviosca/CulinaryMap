@@ -1,6 +1,7 @@
 import streamlit as st
 import folium
-from streamlit_folium import st_folium
+#from streamlit_folium import st_folium
+from streamlit_folium import folium_static
 import os
 import pandas as pd
 import numpy as np
@@ -191,7 +192,8 @@ if page == "📍 Mapa":
     # Mostrar el mapa en Streamlit
     col1, col2, col3 = st.columns([0.2,0.6,0.2])
     with col2:
-        st_folium(m, width='100%')
+        #st_folium(m, width='100%')
+        folium_static(m)
 
 
 elif page == "🔑 Admin":
