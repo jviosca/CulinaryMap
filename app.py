@@ -191,9 +191,30 @@ if page == "📍 Mapa":
 
     # Mostrar el mapa en Streamlit
     col1, col2, col3 = st.columns([0.2,0.6,0.2])
+    # Inyectar CSS para establecer el ancho máximo
+    st.markdown("""
+    <style>
+        .map-container {
+            width: 90%;
+            max-width: 900px;  /* Ajusta esto si quieres un límite en PC */
+            margin: auto;
+        }
+        iframe {
+            width: 100% !important;
+            height: 500px !important;  /* Ajustar altura */
+        }
+        @media (max-width: 768px) {
+            iframe {
+                height: 350px !important;  /* Reducir altura en móviles */
+            }
+        }
+    </style>
+    """, unsafe_allow_html=True)
     with col2:
-        #st_folium(m, width='100%')
-        folium_static(m, width='90%')
+        # Envolver el mapa en un div con la clase "map-container"
+        st.markdown('<div class="map-container">', unsafe_allow_html=True)
+        folium_static(m)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 
 elif page == "🔑 Admin":
