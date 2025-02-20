@@ -193,7 +193,7 @@ if page == "📍 Mapa":
     col1, col2, col3 = st.columns([0.2,0.6,0.2])
     with col2:
         #st_folium(m, width='100%')
-        folium_static(m)
+        folium_static(m, width='90%')
 
 
 elif page == "🔑 Admin":
