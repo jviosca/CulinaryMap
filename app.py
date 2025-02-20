@@ -183,7 +183,7 @@ if page == "📍 Mapa":
             ).add_to(m)
 
     # Mostrar el mapa en Streamlit
-    col1, col2, col3 = st.columns([0.2,0.6,0.2])
+    col1, col2, col3 = st.columns([0.25,0.5,0.25])
     with col2:
         st_folium(m, width='100%')
 
