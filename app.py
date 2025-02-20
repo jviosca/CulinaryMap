@@ -18,7 +18,7 @@ st.set_page_config(
     page_title="CulinaryMap",  # Título de la pestaña en el navegador
     page_icon="🍽️",  # Icono de la pestaña
     layout="wide",  # Configuración amplia
-    initial_sidebar_state="expanded"  # Barra lateral expandida por defecto
+    initial_sidebar_state="collapsed"  # Barra lateral expandida por defecto
 )
 
 #if st.button("🔄 Reparar datos guardados"): # si etiquetas no tienen id, no se muestran todas
@@ -135,15 +135,21 @@ if page == "📍 Mapa":
     with col2: 
         puntuacion_minima = st.selectbox("Puntuación mínima", options=[None, 1, 2, 3, 4, 5], index=0, format_func=lambda x: "Sin filtro" if x is None else str(x))
     with col3:
-        visitado = st.checkbox("Mostrar solo visitados")
+        #visitado = st.checkbox("Mostrar solo visitados")
+        filtro_visitados = st.selectbox("Filtrar por visitas", 
+                ["No filtrar", "Visitados", "No visitados"])
     # Aplicar filtros
     if etiquetas_seleccionadas:
         #sitios = sitios[sitios["etiquetas"].apply(lambda x: any(tag in x for tag in etiquetas_seleccionadas))]
         sitios = sitios[sitios["etiquetas"].apply(lambda x: isinstance(x, list) and any(tag in x for tag in etiquetas_seleccionadas))]
     if puntuacion_minima is not None:
         sitios = sitios[(sitios["puntuación"].notna()) & (sitios["puntuación"] >= puntuacion_minima)]
-    if visitado:
-        sitios = sitios[sitios["visitado"] == True]    
+    #if visitado:
+        #sitios = sitios[sitios["visitado"] == True]    
+    if filtro_visitados == "Visitados":
+        sitios = sitios[sitios["visitado"] == True]
+    elif filtro_visitados == "No visitados":
+        sitios = sitios[sitios["visitado"] == False]
     
     # Agregar campo de búsqueda arriba de los filtros
     busqueda = st.text_input("🔍 Buscar sitio por nombre:")
