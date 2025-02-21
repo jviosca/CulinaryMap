@@ -31,9 +31,13 @@ sitios, etiquetas = load_data()
 sitios = sitios.sort_values(by="nombre", ascending=True)
 etiquetas = etiquetas.sort_values(by="nombre", ascending=True)
 
-# Inicializar la página si no existe en `st.session_state`
+# Inicializar el estado de la página si no existe
 if "page" not in st.session_state:
     st.session_state["page"] = "📍 Mapa"  # Página predeterminada
+
+# Asegurar que "sidebar_navigation" existe en session_state antes de usarlo
+if "sidebar_navigation" not in st.session_state:
+    st.session_state["sidebar_navigation"] = "📍 Mapa"
 
 # Si hay una página pendiente de cambio, aplicarla antes de mostrar el sidebar
 if "next_page" in st.session_state:
@@ -320,7 +324,7 @@ elif page == "🔑 Admin":
                 st.session_state["mapa_centrado"] = {"lat": lat, "lon": lon}
                 # Cambiar de página
                 st.session_state["next_page"] = "📍 Mapa"
-                st.session_state["sidebar_navigation"] = "📍 Mapa"
+                #st.session_state["sidebar_navigation"] = "📍 Mapa"
                 st.rerun()  # Refrescar la app
                 #switch_page.switch_page("📍 Mapa")
                 
