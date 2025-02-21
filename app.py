@@ -1,12 +1,10 @@
 import streamlit as st
 import folium
-#from streamlit_folium import st_folium
 from streamlit_folium import folium_static
 import os
 import pandas as pd
 import numpy as np
 from streamlit_js_eval import get_geolocation
-import streamlit_extras.switch_page_button as switch_page
 import time
 from aux_functions import (
                         load_data, 
@@ -324,9 +322,7 @@ elif page == "🔑 Admin":
                 st.session_state["mapa_centrado"] = {"lat": lat, "lon": lon}
                 # Cambiar de página
                 st.session_state["next_page"] = "📍 Mapa"
-                #st.session_state["sidebar_navigation"] = "📍 Mapa"
                 st.rerun()  # Refrescar la app
-                #switch_page.switch_page("📍 Mapa")
                 
 
     # Mostrar y editar etiquetas
