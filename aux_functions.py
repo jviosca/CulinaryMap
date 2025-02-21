@@ -56,7 +56,7 @@ def authenticate():
     else:
         st.error("Contraseña incorrecta. Intenta nuevamente.")
 
-
+@st.cache_data(ttl=0)
 def load_data():
     try:
         with open("sitios.json", "rb") as file:
@@ -110,7 +110,8 @@ def save_data(df_sitios, df_etiquetas):
     encrypted_data = FERNET.encrypt(json.dumps(data, indent=4, ensure_ascii=False).encode())
     with open("sitios.json", "wb") as file:
         file.write(encrypted_data)
-
+    st.cache_data.clear()
+    
 
 def reparar_datos_guardados():
     try:
