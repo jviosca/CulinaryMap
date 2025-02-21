@@ -163,14 +163,14 @@ def obtener_coordenadas_desde_google_maps(url):
     # Paso 2: Buscar coordenadas en la URL con varios patrones
     patrones = [
         r'!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)',  # Formato !3dlat!4dlon (coordenadas reales)
-        r'@(-?\d+\.\d+),(-?\d+\.\d+)',       # Formato @lat,lon
-        r'@(-?\d+\.\d+),(-?\d+\.\d+),\d+z', # Formato @lat,lon,zoomz
-        r'/place/(-?\d+\.\d+),(-?\d+\.\d+)', # Formato /place/lat,lon
-        r'q=(-?\d+\.\d+),(-?\d+\.\d+)',      # Formato q=lat,lon
-        r'll=(-?\d+\.\d+),(-?\d+\.\d+)',     # Formato ll=lat,lon
-        r'daddr=(-?\d+\.\d+),(-?\d+\.\d+)',  # Formato daddr=lat,lon (destino en rutas)
-        r'center=(-?\d+\.\d+),(-?\d+\.\d+)', # Formato center=lat,lon (mapa estático)
-        r'markers=(-?\d+\.\d+),(-?\d+\.\d+)' # Formato markers=lat,lon
+        #r'@(-?\d+\.\d+),(-?\d+\.\d+)',       # Formato @lat,lon
+        #r'@(-?\d+\.\d+),(-?\d+\.\d+),\d+z', # Formato @lat,lon,zoomz
+        #r'/place/(-?\d+\.\d+),(-?\d+\.\d+)', # Formato /place/lat,lon
+        #r'q=(-?\d+\.\d+),(-?\d+\.\d+)',      # Formato q=lat,lon
+        #r'll=(-?\d+\.\d+),(-?\d+\.\d+)',     # Formato ll=lat,lon
+        #r'daddr=(-?\d+\.\d+),(-?\d+\.\d+)',  # Formato daddr=lat,lon (destino en rutas)
+        #r'center=(-?\d+\.\d+),(-?\d+\.\d+)', # Formato center=lat,lon (mapa estático)
+        #r'markers=(-?\d+\.\d+),(-?\d+\.\d+)' # Formato markers=lat,lon
     ]
     
     for i, patron in enumerate(patrones):
