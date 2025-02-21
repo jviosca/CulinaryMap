@@ -39,6 +39,7 @@ if "page" not in st.session_state:
 if "next_page" in st.session_state:
     st.session_state["page"] = st.session_state["next_page"]
     del st.session_state["next_page"]  # Borrar variable después de usarla
+    st.rerun()
 
 # Sidebar con navegación
 page = st.sidebar.radio("Selecciona una página", ["📍 Mapa", "🔑 Admin"], index=["📍 Mapa", "🔑 Admin"].index(st.session_state["page"]))
