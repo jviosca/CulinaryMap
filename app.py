@@ -218,7 +218,8 @@ if page == "📍 Mapa":
             if isinstance(sitio.get("etiquetas"), list) and len(sitio["etiquetas"]) > 0:
                 etiquetas_text = ", ".join(etq.strip() for etq in sitio["etiquetas"] if isinstance(etq, str))
                 popup_text += f"<br>🏷️ {etiquetas_text}"
-            popup_text += f"\nCoordenadas: " + str(sitio["lat"]) + ", " + str(sitio["lon"])
+            # mostrar coordenadas en popup para debugging
+            #popup_text += f"\nCoordenadas: " + str(sitio["lat"]) + ", " + str(sitio["lon"])
             folium.Marker(
                 location=[sitio["lat"], sitio["lon"]],
                 popup = popup_text,
