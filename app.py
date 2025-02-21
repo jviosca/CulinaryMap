@@ -31,18 +31,26 @@ sitios, etiquetas = load_data()
 sitios = sitios.sort_values(by="nombre", ascending=True)
 etiquetas = etiquetas.sort_values(by="nombre", ascending=True)
 
-# Inicializar el estado de la página si no existe
+# Inicializar la página si no existe en `st.session_state`
 if "page" not in st.session_state:
     st.session_state["page"] = "📍 Mapa"  # Página predeterminada
 
-# Cambiar la página si se ha establecido en otro lugar
+# Si hay una página pendiente de cambio, aplicarla antes de mostrar el sidebar
 if "next_page" in st.session_state:
     st.session_state["page"] = st.session_state["next_page"]
     del st.session_state["next_page"]  # Borrar variable después de usarla
-    st.rerun()
+    st.rerun()  # 🔥 Recargar para aplicar el cambio en el `radio`
 
-# Sidebar con navegación
-page = st.sidebar.radio("Selecciona una página", ["📍 Mapa", "🔑 Admin"], index=["📍 Mapa", "🔑 Admin"].index(st.session_state["page"]))
+# 📌 Forzar actualización del `radio` usando `key`
+page = st.sidebar.radio(
+    "Selecciona una página", 
+    ["📍 Mapa", "🔑 Admin"], 
+    index=["📍 Mapa", "🔑 Admin"].index(st.session_state["page"]),
+    key="sidebar_navigation"  # Agregar un `key` evita conflictos en `st.session_state`
+)
+
+# Guardar la selección actual en `st.session_state["page"]`
+st.session_state["page"] = page
 
 
 #page = st.sidebar.radio("Selecciona una página", ["📍 Mapa", "🔑 Admin"])
@@ -312,6 +320,7 @@ elif page == "🔑 Admin":
                 st.session_state["mapa_centrado"] = {"lat": lat, "lon": lon}
                 # Cambiar de página
                 st.session_state["next_page"] = "📍 Mapa"
+                st.session_state["sidebar_navigation"] = "📍 Mapa"
                 st.rerun()  # Refrescar la app
                 #switch_page.switch_page("📍 Mapa")
                 
