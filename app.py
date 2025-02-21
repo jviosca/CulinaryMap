@@ -66,6 +66,13 @@ st.sidebar.markdown("### Más info en [GitHub](https://github.com/jviosca/Culina
 if page == "📍 Mapa":
     st.title("CulinaryMap")
     st.subheader("Recomendaciones culinarias")
+    # Mensaje destacado con Markdown
+    st.markdown("""
+    ---
+    **❗ ¿Ubicación incorrecta?**  
+    *Si encuentras un sitio mal ubicado en el mapa, envíame un correo a*  
+    📩 [jviosca@gmail.com](mailto:jviosca@gmail.com)
+    """)
     
     # Checkbox para mostrar ubicación del usuario
     mostrar_mi_ubicacion = st.checkbox("📍 Mostrar mi ubicación", value=False)
