@@ -360,6 +360,21 @@ elif page == "🔑 Admin":
         for i in range(len(edited_df)):
             if not edited_df.at[i, "visitado"]:  # Si "visitado" es False
                 edited_df.at[i, "puntuación"] = None  # Poner puntuación en None
+        
+        # Revisar si se ha cambiado algún enlace de Google Maps y extraer coordenadas
+        for i in range(len(edited_df)):
+            nuevo_link = edited_df.at[i, "ubicación"]
+            antiguo_link = df_sitios.at[i, "ubicación"]
+
+            if nuevo_link != antiguo_link:  # Detectar cambio en el enlace
+                coordenadas = obtener_coordenadas_desde_google_maps(nuevo_link)
+                if coordenadas:
+                    lat, lon = coordenadas
+                    st.success(f"🌍 Coordenadas actualizadas: Latitud {lat}, Longitud {lon}")
+                    lat_lon_data.at[i, "lat"] = lat
+                    lat_lon_data.at[i, "lon"] = lon
+                else:
+                    st.warning("⚠️ No se pudieron extraer coordenadas del nuevo enlace.")
 
         if st.button("Guardar cambios"):
             # Restaurar las coordenadas antes de guardar
