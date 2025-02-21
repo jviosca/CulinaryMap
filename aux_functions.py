@@ -138,7 +138,6 @@ def reparar_datos_guardados():
         st.error(f"Error al intentar reparar datos: {e}")
 
 
-
 def obtener_coordenadas_desde_google_maps(url):
     """
     Extrae las coordenadas (latitud, longitud) desde un enlace de Google Maps.
@@ -154,7 +153,7 @@ def obtener_coordenadas_desde_google_maps(url):
             "Referer": "https://www.google.com/",
         }
         try:
-            respuesta = requests.get(url, allow_redirects=True, headers = headers)
+            respuesta = requests.get(url, allow_redirects=True, headers=headers)
             url = respuesta.url  # Obtener la URL final
             st.write(f"URL resuelta: {url}")  # Debugging: Verificar URL después de la redirección
         except requests.RequestException as e:
@@ -163,15 +162,15 @@ def obtener_coordenadas_desde_google_maps(url):
     
     # Paso 2: Buscar coordenadas en la URL con varios patrones
     patrones = [
-        r'@(-?\d+\.\d+),(-?\d+\.\d+)',             # Formato @lat,lon
-        r'@(-?\d+\.\d+),(-?\d+\.\d+),\d+z',        # Formato @lat,lon,zoomz
-        r'/place/(-?\d+\.\d+),(-?\d+\.\d+)',       # Formato /place/lat,lon
-        r'!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)',         # Formato !3dlat!4dlon
-        r'q=(-?\d+\.\d+),(-?\d+\.\d+)',            # Formato q=lat,lon
-        r'll=(-?\d+\.\d+),(-?\d+\.\d+)',           # Formato ll=lat,lon
-        r'daddr=(-?\d+\.\d+),(-?\d+\.\d+)',        # Formato daddr=lat,lon (destino en rutas)
-        r'center=(-?\d+\.\d+),(-?\d+\.\d+)',       # Formato center=lat,lon (mapa estático)
-        r'markers=(-?\d+\.\d+),(-?\d+\.\d+)',      # Formato markers=lat,lon
+        r'!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)',  # Formato !3dlat!4dlon (coordenadas reales)
+        r'@(-?\d+\.\d+),(-?\d+\.\d+)',       # Formato @lat,lon
+        r'@(-?\d+\.\d+),(-?\d+\.\d+),\d+z', # Formato @lat,lon,zoomz
+        r'/place/(-?\d+\.\d+),(-?\d+\.\d+)', # Formato /place/lat,lon
+        r'q=(-?\d+\.\d+),(-?\d+\.\d+)',      # Formato q=lat,lon
+        r'll=(-?\d+\.\d+),(-?\d+\.\d+)',     # Formato ll=lat,lon
+        r'daddr=(-?\d+\.\d+),(-?\d+\.\d+)',  # Formato daddr=lat,lon (destino en rutas)
+        r'center=(-?\d+\.\d+),(-?\d+\.\d+)', # Formato center=lat,lon (mapa estático)
+        r'markers=(-?\d+\.\d+),(-?\d+\.\d+)' # Formato markers=lat,lon
     ]
     
     for i, patron in enumerate(patrones):
@@ -183,3 +182,4 @@ def obtener_coordenadas_desde_google_maps(url):
     
     st.warning("No se encontraron coordenadas en la URL.")  # Debugging: Caso en que no se encuentran coordenadas
     return None
+
