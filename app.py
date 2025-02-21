@@ -401,7 +401,7 @@ elif page == "🔑 Admin":
             st.session_state["original_links"] = df_sitios.set_index("nombre")["ubicación"].to_dict()
             save_data(df_sitios, df_etiquetas)
             st.success("✅ Datos guardados correctamente")
-            time.sleep(1)
+            time.sleep(2)
             st.rerun()
 
     # 📋 Editar etiquetas de un sitio específico
