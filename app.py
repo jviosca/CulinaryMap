@@ -70,8 +70,8 @@ if page == "📍 Mapa":
     st.markdown("""
     ---
     **❗ ¿Ubicación incorrecta?**  
-    *Si encuentras un sitio mal ubicado en el mapa, envíame un correo a*  
-    📩 [jviosca@gmail.com](mailto:jviosca@gmail.com)
+    *Si encuentras un sitio mal ubicado en el mapa, envíame un 
+    📩 [correo](mailto:jviosca@gmail.com)*
     """)
     
     # Checkbox para mostrar ubicación del usuario
