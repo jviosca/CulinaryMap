@@ -361,20 +361,26 @@ elif page == "🔑 Admin":
             if not edited_df.at[i, "visitado"]:  # Si "visitado" es False
                 edited_df.at[i, "puntuación"] = None  # Poner puntuación en None
         
-        # Revisar si se ha cambiado algún enlace de Google Maps y extraer coordenadas
+        # Detectar si se ha cambiado algún enlace de Google Maps
+        cambios_detectados = {}
+        
         for i in range(len(edited_df)):
             nuevo_link = edited_df.at[i, "ubicación"]
             antiguo_link = df_sitios.at[i, "ubicación"]
 
-            if nuevo_link != antiguo_link:  # Detectar cambio en el enlace
+            if nuevo_link != antiguo_link:  # Detectar si el enlace cambió
+                cambios_detectados[i] = nuevo_link  # Guardamos el índice y nuevo enlace
+
+        if cambios_detectados:  # Solo llamar a la función si hay cambios
+            for i, nuevo_link in cambios_detectados.items():
                 coordenadas = obtener_coordenadas_desde_google_maps(nuevo_link)
                 if coordenadas:
                     lat, lon = coordenadas
-                    st.success(f"🌍 Coordenadas actualizadas: Latitud {lat}, Longitud {lon}")
+                    st.success(f"🌍 Coordenadas actualizadas para {edited_df.at[i, 'nombre']}: Lat {lat}, Lon {lon}")
                     lat_lon_data.at[i, "lat"] = lat
                     lat_lon_data.at[i, "lon"] = lon
                 else:
-                    st.warning("⚠️ No se pudieron extraer coordenadas del nuevo enlace.")
+                    st.warning(f"⚠️ No se pudieron extraer coordenadas para {edited_df.at[i, 'nombre']}.")
 
         if st.button("Guardar cambios"):
             # Restaurar las coordenadas antes de guardar
