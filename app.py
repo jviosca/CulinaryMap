@@ -344,9 +344,13 @@ elif page == "🔑 Admin":
         if "original_links" not in st.session_state:
             st.session_state["original_links"] = df_sitios.set_index("nombre")["ubicación"].to_dict()
         # Guardamos una copia de las coordenadas antes de eliminarlas
-        lat_lon_data = df_sitios[["lat", "lon"]].copy()
+        lat_lon_data = df_sitios[["nombre", "lat", "lon"]].copy()
         # Crear un DataFrame sin índice y sin las columnas lat/lon
         df_editable = df_sitios.drop(columns=["lat", "lon"], errors="ignore").reset_index(drop=True)
+        # 🚀 Asegurar que "nombre" esté presente en `df_editable`
+        if "nombre" not in df_editable.columns:
+            st.error("Error: La columna 'nombre' no está en los datos. Verifica la carga de datos.")
+            st.stop()
         edited_df = st.data_editor(
             df_editable,
             column_config={
@@ -374,17 +378,17 @@ elif page == "🔑 Admin":
                 antiguo_link = st.session_state["original_links"].get(sitio_nombre, None)
 
                 if nuevo_link != antiguo_link:  # Detectar si el enlace cambió
-                    cambios_detectados[i] = nuevo_link  # Guardamos el índice y nuevo enlace
+                    cambios_detectados[sitio_nombre] = nuevo_link  # Guardamos por nombre (evita errores de índice)
 
             if cambios_detectados:  # Solo llamar a la función si hay cambios
-                for i, nuevo_link in cambios_detectados.items():
+                for sitio_nombre, nuevo_link in cambios_detectados.items():
                     coordenadas = obtener_coordenadas_desde_google_maps(nuevo_link)
                     if coordenadas:
                         lat, lon = coordenadas
                         st.success(f"🌍 Coordenadas actualizadas para {edited_df.at[i, 'nombre']}: Lat {lat}, Lon {lon}")
                         #lat_lon_data.at[i, "lat"] = lat
                         #lat_lon_data.at[i, "lon"] = lon
-                        lat_lon_data.loc[lat_lon_data["nombre"] == edited_df.at[i, "nombre"], ["lat", "lon"]] = [lat, lon]
+                        lat_lon_data.loc[lat_lon_data["nombre"] == sitio_nombre, ["lat", "lon"]] = [lat, lon]
                     else:
                         st.warning(f"⚠️ No se pudieron extraer coordenadas para {edited_df.at[i, 'nombre']}.")
 
