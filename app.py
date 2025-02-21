@@ -33,7 +33,13 @@ etiquetas = etiquetas.sort_values(by="nombre", ascending=True)
 
 # Página de selección
 st.sidebar.title("Navegación")
-page = st.sidebar.radio("Selecciona una página", ["📍 Mapa", "🔑 Admin"])
+if "page" in st.session_state:
+    page = st.session_state["page"]  # Usar la página almacenada
+    del st.session_state["page"]  # Eliminarla para no forzar el cambio cada vez
+else:
+    page = st.sidebar.radio("Selecciona una página", ["📍 Mapa", "🔑 Admin"])
+
+#page = st.sidebar.radio("Selecciona una página", ["📍 Mapa", "🔑 Admin"])
 st.sidebar.write("")
 st.sidebar.write("")
 st.sidebar.write("")
@@ -290,8 +296,13 @@ elif page == "🔑 Admin":
                 save_data(df_sitios, df_etiquetas)
                 st.success("✅ Sitio añadido correctamente!")
                 time.sleep(2)
+                # Guardar coordenadas en `st.session_state`
+                st.session_state["mapa_centrado"] = {"lat": lat, "lon": lon}
+                # Cambiar de página
+                st.session_state["page"] = "📍 Mapa"  # Indica que la próxima vez debe abrir el mapa
                 st.rerun()
-                switch_page.switch_page("📍 Mapa")
+                #switch_page.switch_page("📍 Mapa")
+                
 
     # Mostrar y editar etiquetas
     with st.expander("📋 Editar Etiquetas"):
