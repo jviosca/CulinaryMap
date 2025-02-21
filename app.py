@@ -289,7 +289,7 @@ elif page == "🔑 Admin":
                 df_sitios = pd.concat([df_sitios, nuevo_sitio], ignore_index=True)
                 save_data(df_sitios, df_etiquetas)
                 st.success("✅ Sitio añadido correctamente!")
-                time.sleep(1000)
+                time.sleep(2)
                 st.rerun()
                 switch_page.switch_page("📍 Mapa")
 
