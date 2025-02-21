@@ -31,13 +31,18 @@ sitios, etiquetas = load_data()
 sitios = sitios.sort_values(by="nombre", ascending=True)
 etiquetas = etiquetas.sort_values(by="nombre", ascending=True)
 
-# Página de selección
-st.sidebar.title("Navegación")
-if "page" in st.session_state:
-    page = st.session_state["page"]  # Usar la página almacenada
-    del st.session_state["page"]  # Eliminarla para no forzar el cambio cada vez
-else:
-    page = st.sidebar.radio("Selecciona una página", ["📍 Mapa", "🔑 Admin"])
+# Inicializar el estado de la página si no existe
+if "page" not in st.session_state:
+    st.session_state["page"] = "📍 Mapa"  # Página predeterminada
+
+# Cambiar la página si se ha establecido en otro lugar
+if "next_page" in st.session_state:
+    st.session_state["page"] = st.session_state["next_page"]
+    del st.session_state["next_page"]  # Borrar variable después de usarla
+
+# Sidebar con navegación
+page = st.sidebar.radio("Selecciona una página", ["📍 Mapa", "🔑 Admin"], index=["📍 Mapa", "🔑 Admin"].index(st.session_state["page"]))
+
 
 #page = st.sidebar.radio("Selecciona una página", ["📍 Mapa", "🔑 Admin"])
 st.sidebar.write("")
@@ -112,7 +117,13 @@ if page == "📍 Mapa":
             }
 
     # Determinar la ubicación del mapa
-    if mostrar_mi_ubicacion and "user_location" in st.session_state and st.session_state["user_location"] is not None:
+    if "mapa_centrado" in st.session_state:
+        centro_mapa = [
+            st.session_state["mapa_centrado"]["lat"],
+            st.session_state["mapa_centrado"]["lon"]
+        ]
+        del st.session_state["mapa_centrado"]  # Borrar la variable después de usarla
+    elif mostrar_mi_ubicacion and "user_location" in st.session_state and st.session_state["user_location"] is not None:
         centro_mapa = st.session_state["user_location"]
     elif not mostrar_mi_ubicacion:
         centro_mapa = [
@@ -299,8 +310,8 @@ elif page == "🔑 Admin":
                 # Guardar coordenadas en `st.session_state`
                 st.session_state["mapa_centrado"] = {"lat": lat, "lon": lon}
                 # Cambiar de página
-                st.session_state["page"] = "📍 Mapa"  # Indica que la próxima vez debe abrir el mapa
-                st.rerun()
+                st.session_state["next_page"] = "📍 Mapa"
+                st.rerun()  # Refrescar la app
                 #switch_page.switch_page("📍 Mapa")
                 
 
