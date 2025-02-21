@@ -7,7 +7,6 @@ import re
 import base64
 import pandas as pd
 
-
 SECRETS_FILE = ".streamlit/secrets.toml"
 
 def get_secret_key():

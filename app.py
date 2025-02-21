@@ -6,6 +6,7 @@ import os
 import pandas as pd
 import numpy as np
 from streamlit_js_eval import get_geolocation
+import streamlit_extras.switch_page_button as switch_page
 import time
 from aux_functions import (
                         load_data, 
@@ -288,8 +289,9 @@ elif page == "🔑 Admin":
                 df_sitios = pd.concat([df_sitios, nuevo_sitio], ignore_index=True)
                 save_data(df_sitios, df_etiquetas)
                 st.success("✅ Sitio añadido correctamente!")
-                time.sleep(1)
+                time.sleep(1000)
                 st.rerun()
+                switch_page.switch_page("📍 Mapa")
 
     # Mostrar y editar etiquetas
     with st.expander("📋 Editar Etiquetas"):
