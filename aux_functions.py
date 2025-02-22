@@ -63,7 +63,7 @@ def load_data():
             encrypted_data = file.read()
         decrypted_data = json.loads(FERNET.decrypt(encrypted_data).decode())
         # 🔍 Verificar si los datos descifrados son correctos
-        #st.write("🔓 JSON Descifrado:", decrypted_data)  # DEBUGGING
+        st.write("🔓 JSON Descifrado:", decrypted_data)  # DEBUGGING
         
         df_sitios = pd.DataFrame(decrypted_data.get("sitios", []))
         df_etiquetas = pd.DataFrame(decrypted_data.get("etiquetas", []))
@@ -101,7 +101,7 @@ def save_data(df_sitios, df_etiquetas):
     )
 
     # 🔍 Depuración: Verificar qué datos se guardarán
-    st.write("🔍 Datos a guardar en sitios.json:", df_sitios.to_dict(orient="records"))
+    #st.write("🔍 Datos a guardar en sitios.json:", df_sitios.to_dict(orient="records"))
     #st.write("🔍 Datos a guardar en etiquetas.json:", df_etiquetas.to_dict(orient="records"))
 
     data = {
