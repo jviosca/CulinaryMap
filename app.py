@@ -1,6 +1,7 @@
 import streamlit as st
 import folium
-from streamlit_folium import folium_static
+#from streamlit_folium import folium_static
+from streamlit_folium import st_folium
 import os
 import pandas as pd
 import numpy as np
@@ -251,7 +252,8 @@ if page == "📍 Mapa":
     with col2:
         # Envolver el mapa en un div con la clase "map-container"
         st.markdown('<div class="map-container">', unsafe_allow_html=True)
-        folium_static(m)
+        #folium_static(m)
+        st_folium(m)
         st.markdown('</div>', unsafe_allow_html=True)
 
 
