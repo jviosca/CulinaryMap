@@ -64,7 +64,7 @@ def load_data():
             encrypted_data = file.read()
         decrypted_data = json.loads(FERNET.decrypt(encrypted_data).decode())
         # 🔍 Verificar si los datos descifrados son correctos
-        st.write("🔓 JSON Descifrado:", decrypted_data)  # DEBUGGING
+        #st.write("🔓 JSON Descifrado:", decrypted_data)  # DEBUGGING
         #st.session_state["json_debug"] = decrypted_data
         
         df_sitios = pd.DataFrame(decrypted_data.get("sitios", []))
