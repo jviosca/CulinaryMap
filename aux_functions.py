@@ -6,6 +6,7 @@ import requests
 import re
 import base64
 import pandas as pd
+import shutil
 
 SECRETS_FILE = ".streamlit/secrets.toml"
 
@@ -90,6 +91,9 @@ def load_data():
 
 # 🔐 Función para encriptar y guardar datos
 def save_data(df_sitios, df_etiquetas):
+    # Hacer copia de seguridad
+    shutil.copy("sitios.json", "sitios_backup.json")
+    
     # 🛠️ Asegurar que las etiquetas tengan un id único antes de guardar
     if "id" not in df_etiquetas.columns:
         df_etiquetas["id"] = range(1, len(df_etiquetas) + 1)
