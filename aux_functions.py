@@ -56,14 +56,15 @@ def authenticate():
     else:
         st.error("Contraseña incorrecta. Intenta nuevamente.")
 
-@st.cache_data(ttl=0, persist=False, experimental_allow_widgets=True)
+#@st.cache_data(ttl=0, persist=False, experimental_allow_widgets=True)
 def load_data():
     try:
         with open("sitios.json", "rb") as file:
             encrypted_data = file.read()
         decrypted_data = json.loads(FERNET.decrypt(encrypted_data).decode())
         # 🔍 Verificar si los datos descifrados son correctos
-        st.write("🔓 JSON Descifrado:", decrypted_data)  # DEBUGGING
+        #st.write("🔓 JSON Descifrado:", decrypted_data)  # DEBUGGING
+        st.session_state["json_debug"] = decrypted_data
         
         df_sitios = pd.DataFrame(decrypted_data.get("sitios", []))
         df_etiquetas = pd.DataFrame(decrypted_data.get("etiquetas", []))
