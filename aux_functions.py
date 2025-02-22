@@ -101,7 +101,7 @@ def save_data(df_sitios, df_etiquetas):
     )
 
     # 🔍 Depuración: Verificar qué datos se guardarán
-    #st.write("🔍 Datos a guardar en sitios.json:", df_sitios.to_dict(orient="records"))
+    st.write("🔍 Datos a guardar en sitios.json:", df_sitios.to_dict(orient="records"))
     #st.write("🔍 Datos a guardar en etiquetas.json:", df_etiquetas.to_dict(orient="records"))
 
     data = {
