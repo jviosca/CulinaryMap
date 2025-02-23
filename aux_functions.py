@@ -6,7 +6,7 @@ import requests
 import re
 import base64
 import pandas as pd
-import shutil
+#import shutil
 
 SECRETS_FILE = ".streamlit/secrets.toml"
 
@@ -97,6 +97,9 @@ def load_data():
         with open("sitios.json", "rb") as file:
             encrypted_data = file.read()
         decrypted_data = json.loads(FERNET.decrypt(encrypted_data).decode())
+        
+        with open("sitios_descifrado.json", "w", encoding="utf-8") as file:
+            json.dump(decrypted_data, file, indent=4, ensure_ascii=False)
 
         df_sitios = pd.DataFrame(decrypted_data.get("sitios", []))
         df_etiquetas = pd.DataFrame(decrypted_data.get("etiquetas", []))
@@ -119,7 +122,7 @@ def save_data(df_sitios, df_etiquetas):
     st.session_state["etiquetas_cache"] = df_etiquetas
 
     # Hacer copia de seguridad
-    shutil.copy("sitios.json", "sitios_backup.json")
+    #shutil.copy("sitios.json", "sitios_backup.json")
     
     # 🛠️ Asegurar que las etiquetas tengan un id único antes de guardar
     if "id" not in df_etiquetas.columns:
@@ -218,3 +221,9 @@ def obtener_coordenadas_desde_google_maps(url):
     st.warning("No se encontraron coordenadas en la URL.")  # Debugging: Caso en que no se encuentran coordenadas
     return None
 
+# Suponiendo que df_sitios tiene una columna "etiquetas" con listas de etiquetas
+def calcular_conteo_etiquetas(df_sitios):
+    todas_etiquetas = df_sitios["etiquetas"].explode()  # Desanida listas
+    conteo_etiquetas = todas_etiquetas.value_counts().reset_index()
+    conteo_etiquetas.columns = ["etiqueta", "Número de sitios"]
+    return conteo_etiquetas

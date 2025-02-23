@@ -12,7 +12,8 @@ from aux_functions import (
                         save_data, 
                         authenticate,
                         obtener_coordenadas_desde_google_maps,
-                        reparar_datos_guardados
+                        reparar_datos_guardados,
+                        calcular_conteo_etiquetas
 )
 
 st.set_page_config(
@@ -334,10 +335,18 @@ elif page == "🔑 Admin":
                 # Cambiar de página
                 st.session_state["next_page"] = "📍 Mapa"
                 st.rerun()  # Refrescar la app
-                
 
     # Mostrar y editar etiquetas
     with st.expander("📋 Editar Etiquetas"):
+        df_conteo = calcular_conteo_etiquetas(df_sitios)
+        # Fusionar con df_etiquetas, manteniendo solo las etiquetas existentes
+        df_etiquetas = df_etiquetas.drop(columns=["descripcion"], errors="ignore").merge(
+            df_conteo, left_on="nombre", right_on="etiqueta", how="left"
+        ).fillna(0)  # En caso de que alguna etiqueta no tenga conteo
+        
+        # Eliminar columna duplicada "etiqueta" si es lo mismo que "nombre"
+        if "etiqueta" in df_etiquetas.columns and "nombre" in df_etiquetas.columns:
+            df_etiquetas = df_etiquetas.drop(columns=["etiqueta"])
         id_data = df_etiquetas[["id"]].copy()
         df_etiquetas_editable = df_etiquetas.drop(columns=["id"], errors="ignore").reset_index(drop=True)
         edited_etiquetas = st.data_editor(df_etiquetas_editable, use_container_width=True, hide_index=True)
@@ -348,6 +357,7 @@ elif page == "🔑 Admin":
             st.success("✅ Etiquetas actualizadas correctamente!")
             time.sleep(2)
             st.rerun()
+
 
     # 📋 Editar sitios
     with st.expander("📋 Editar Sitios (excepto etiquetas)"):
