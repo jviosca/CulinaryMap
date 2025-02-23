@@ -58,7 +58,7 @@ def authenticate():
         st.error("Contraseña incorrecta. Intenta nuevamente.")
 
 #@st.cache_data(ttl=0, persist=False, experimental_allow_widgets=True)
-def load_data():
+def load_data_old():
     try:
         with open("sitios.json", "rb") as file:
             encrypted_data = file.read()
@@ -89,8 +89,35 @@ def load_data():
                pd.DataFrame(columns=["id", "nombre", "descripcion"])
 
 
+def load_data():
+    if "sitios_cache" in st.session_state and "etiquetas_cache" in st.session_state:
+        return st.session_state["sitios_cache"], st.session_state["etiquetas_cache"]
+
+    try:
+        with open("sitios.json", "rb") as file:
+            encrypted_data = file.read()
+        decrypted_data = json.loads(FERNET.decrypt(encrypted_data).decode())
+
+        df_sitios = pd.DataFrame(decrypted_data.get("sitios", []))
+        df_etiquetas = pd.DataFrame(decrypted_data.get("etiquetas", []))
+
+        # Guardar en session_state para evitar recargas innecesarias
+        st.session_state["sitios_cache"] = df_sitios
+        st.session_state["etiquetas_cache"] = df_etiquetas
+
+        return df_sitios, df_etiquetas
+
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        st.error(f"Error cargando los datos: {e}")
+        return pd.DataFrame(), pd.DataFrame()
+
+
 # 🔐 Función para encriptar y guardar datos
 def save_data(df_sitios, df_etiquetas):
+    # Actualizar session_state con los datos más recientes
+    st.session_state["sitios_cache"] = df_sitios
+    st.session_state["etiquetas_cache"] = df_etiquetas
+
     # Hacer copia de seguridad
     shutil.copy("sitios.json", "sitios_backup.json")
     

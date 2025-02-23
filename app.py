@@ -286,7 +286,7 @@ elif page == "🔑 Admin":
             df_etiquetas = pd.concat([df_etiquetas, nueva_etiqueta], ignore_index=True)
             save_data(df_sitios, df_etiquetas)
             st.success("✅ Etiqueta añadida correctamente!")
-            time.sleep(1)
+            time.sleep(2)
             st.rerun()
     
     # ➕ Agregar un nuevo sitio
@@ -346,7 +346,7 @@ elif page == "🔑 Admin":
             df_etiquetas = edited_etiquetas  # Asegurar que los cambios se reflejen en el dataframe principal
             save_data(df_sitios, df_etiquetas)
             st.success("✅ Etiquetas actualizadas correctamente!")
-            time.sleep(1)
+            time.sleep(2)
             st.rerun()
 
     # 📋 Editar sitios
@@ -440,7 +440,7 @@ elif page == "🔑 Admin":
             df_sitios.at[sitio_index, "etiquetas"] = etiquetas_editadas
             save_data(df_sitios, df_etiquetas)  # Guardar cambios
             st.success(f"✅ Etiquetas actualizadas para {sitio_seleccionado}")
-            time.sleep(1)
+            time.sleep(2)
             st.rerun()
 
     # 🗑️ Eliminar un sitio
@@ -452,7 +452,7 @@ elif page == "🔑 Admin":
                 df_sitios = df_sitios[df_sitios["nombre"] != sitio_a_eliminar]
                 save_data(df_sitios,df_etiquetas)
                 st.success(f"✅ Sitio '{sitio_a_eliminar}' eliminado")
-                time.sleep(1)
+                time.sleep(2)
                 st.rerun()
         else:
             st.info("No hay sitios para eliminar.")
