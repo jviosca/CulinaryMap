@@ -283,12 +283,16 @@ elif page == "🔑 Admin":
         nombre_etiqueta = st.text_input("Nombre de la etiqueta")
         descripcion_etiqueta = st.text_input("Descripción de la etiqueta")
         if st.button("Añadir Etiqueta"):
-            nueva_etiqueta = pd.DataFrame([{ "id": len(df_etiquetas) + 1, "nombre": nombre_etiqueta, "descripcion": descripcion_etiqueta }])
-            df_etiquetas = pd.concat([df_etiquetas, nueva_etiqueta], ignore_index=True)
-            save_data(df_sitios, df_etiquetas)
-            st.success("✅ Etiqueta añadida correctamente!")
-            time.sleep(2)
-            st.rerun()
+            # Verificar si la etiqueta ya existe (ignorando mayúsculas/minúsculas)
+            if nombre_etiqueta.lower() in df_etiquetas["nombre"].str.lower().tolist():
+                st.warning("⚠️ Esta etiqueta ya existe. Intenta con otro nombre.")
+            elif nombre_etiqueta:  # Evitar añadir etiquetas vacías
+                nueva_etiqueta = pd.DataFrame([{ "id": len(df_etiquetas) + 1, "nombre": nombre_etiqueta, "descripcion": descripcion_etiqueta }])
+                df_etiquetas = pd.concat([df_etiquetas, nueva_etiqueta], ignore_index=True)
+                save_data(df_sitios, df_etiquetas)
+                st.success("✅ Etiqueta añadida correctamente!")
+                time.sleep(2)
+                st.rerun()
     
     # ➕ Agregar un nuevo sitio
     with st.expander("➕ Agregar un nuevo sitio"):
