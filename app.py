@@ -351,9 +351,19 @@ elif page == "🔑 Admin":
         # Eliminar columna duplicada "etiqueta" si es lo mismo que "nombre"
         if "etiqueta" in df_etiquetas.columns and "nombre" in df_etiquetas.columns:
             df_etiquetas = df_etiquetas.drop(columns=["etiqueta"])
+        # **Si hay múltiples columnas de "Número de sitios", quedarnos solo con una**
+        columnas_duplicadas = [col for col in df_etiquetas.columns if "Número de sitios" in col]
+        if len(columnas_duplicadas) > 1:
+            df_etiquetas = df_etiquetas.drop(columns=columnas_duplicadas[:-1])  # Dejamos solo una columna
         id_data = df_etiquetas[["id"]].copy()
+        # Ordenar antes de eliminar "id"
+        df_etiquetas = df_etiquetas.sort_values(by="nombre", ascending=True)        
         df_etiquetas_editable = df_etiquetas.drop(columns=["id"], errors="ignore").reset_index(drop=True)
-        edited_etiquetas = st.data_editor(df_etiquetas_editable, use_container_width=True, hide_index=True)
+        edited_etiquetas = st.data_editor(df_etiquetas_editable, 
+                            use_container_width=True, 
+                            hide_index=True,
+                            disabled={"Número de sitios":True}
+        )
         if st.button("Guardar cambios en etiquetas"):
             edited_etiquetas = edited_etiquetas.merge(id_data, left_index=True, right_index=True, how="left")
             df_etiquetas = edited_etiquetas  # Asegurar que los cambios se reflejen en el dataframe principal
