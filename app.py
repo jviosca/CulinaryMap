@@ -77,7 +77,7 @@ if page == "📍 Mapa":
     """)
     
     # Checkbox para mostrar ubicación del usuario
-    mostrar_mi_ubicacion = st.checkbox("📍 Mostrar mi ubicación", value=False)
+    mostrar_mi_ubicacion = st.checkbox("📍 Mostrar mi ubicación (en móvil activar GPS)", value=False)
     
     # Obtener geolocalización solo si el usuario lo activa y aún no la tenemos
     if mostrar_mi_ubicacion:
