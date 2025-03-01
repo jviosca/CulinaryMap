@@ -172,6 +172,11 @@ if page == "📍 Mapa":
     # Mostrar cuántos sitios coinciden con la búsqueda
     st.write(f"Resultados encontrados: {len(sitios_filtrados)}")
 
+    # 📌 Asegurar que el mapa se centre en el primer sitio filtrado, si hay resultados
+    if not sitios_filtrados.empty:
+        # Actualizar centro_mapa con la primera ubicación válida de sitios_filtrados
+        st.session_state["centro_mapa"] = [sitios_filtrados.iloc[0]["lat"], sitios_filtrados.iloc[0]["lon"]]
+
     # 📍 Crear el mapa con Folium con la última ubicación registrada en centro_mapa
     m = folium.Map(location=st.session_state["centro_mapa"], zoom_start=13)
 
