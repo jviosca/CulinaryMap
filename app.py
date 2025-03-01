@@ -122,14 +122,42 @@ if page == "📍 Mapa":
     elif mostrar_mi_ubicacion and "user_location" in st.session_state:
         st.session_state["centro_mapa"] = st.session_state["user_location"]
 
+
+    # Filtro de etiquetas arriba del mapa
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        #etiquetas_dict = {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas.to_dict('records')} if isinstance(etiquetas, pd.DataFrame) else {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas} if isinstance(etiquetas, list) and all(isinstance(etiqueta, dict) for etiqueta in etiquetas) else {}
+        if isinstance(etiquetas, pd.DataFrame):
+            etiquetas_dict = {etiqueta["id"]: etiqueta["nombre"] for etiqueta in etiquetas.to_dict("records")}
+        elif isinstance(etiquetas, list) and all(isinstance(etiqueta, dict) for etiqueta in etiquetas):
+            etiquetas_dict = {etiqueta["id"]: etiqueta["nombre"] for etiqueta in etiquetas}
+        else:
+            etiquetas_dict = {}
+        #st.write("Etiquetas disponibles en el filtro:", etiquetas_dict)
+        etiquetas_seleccionadas = st.multiselect("Filtrar por etiquetas", list(etiquetas_dict.values()))
+    with col2: 
+        puntuacion_minima = st.selectbox("Puntuación mínima", options=[None, 1, 2, 3, 4, 5], index=0, format_func=lambda x: "Sin filtro" if x is None else str(x))
+    with col3:
+        #visitado = st.checkbox("Mostrar solo visitados")
+        filtro_visitados = st.selectbox("Filtrar por visitas", 
+                ["No filtrar", "Visitados", "No visitados"])
+                
+    # Aplicar filtros al DataFrame de sitios
+    sitios_filtrados = sitios.copy() # Mantener una copia sin modificar para que muestre todos si no se busca nada
+    # Aplicar filtros
+    if etiquetas_seleccionadas:
+        sitios_filtrados = sitios_filtrados[sitios_filtrados["etiquetas"].apply(lambda x: isinstance(x, list) and any(tag in x for tag in etiquetas_seleccionadas))]
+    if puntuacion_minima is not None:
+        sitios_filtrados = sitios_filtrados[(sitios_filtrados["puntuación"].notna()) & (sitios_filtrados["puntuación"] >= puntuacion_minima)]
+    if filtro_visitados == "Visitados":
+        sitios_filtrados = sitios_filtrados[sitios_filtrados["visitado"] == True]
+    elif filtro_visitados == "No visitados":
+        sitios_filtrados = sitios_filtrados[sitios_filtrados["visitado"] == False]
+
     # 📍 Campo de búsqueda de sitios
     busqueda = st.text_input("🔍 Buscar sitio por nombre:")
-
-    # Aplicar búsqueda sin modificar el DataFrame original
-    sitios_filtrados = sitios  # Mantener una copia sin modificar para que muestre todos si no se busca nada
-
     if busqueda:
-        sitios_filtrados = sitios[sitios["nombre"].str.contains(busqueda, case=False, na=False)]
+        sitios_filtrados = sitios_filtrados[sitios_filtrados["nombre"].str.contains(busqueda, case=False, na=False)]
         if not sitios_filtrados.empty:
             # Actualizar centro_mapa directamente sin usar mapa_centrado
             st.session_state["centro_mapa"] = [sitios_filtrados.iloc[0]["lat"], sitios_filtrados.iloc[0]["lon"]]
