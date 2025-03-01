@@ -61,32 +61,6 @@ def authenticate():
         st.error("Contraseña incorrecta. Intenta nuevamente.")
 
 
-def load_data_old():
-    if "sitios_cache" in st.session_state and "etiquetas_cache" in st.session_state:
-        return st.session_state["sitios_cache"], st.session_state["etiquetas_cache"]
-
-    try:
-        with open("sitios.json", "rb") as file:
-            encrypted_data = file.read()
-        decrypted_data = json.loads(FERNET.decrypt(encrypted_data).decode())
-        
-        with open("sitios_descifrado.json", "w", encoding="utf-8") as file:
-            json.dump(decrypted_data, file, indent=4, ensure_ascii=False)
-
-        df_sitios = pd.DataFrame(decrypted_data.get("sitios", []))
-        df_etiquetas = pd.DataFrame(decrypted_data.get("etiquetas", []))
-
-        # Guardar en session_state para evitar recargas innecesarias
-        st.session_state["sitios_cache"] = df_sitios
-        st.session_state["etiquetas_cache"] = df_etiquetas
-
-        return df_sitios, df_etiquetas
-
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        st.error(f"Error cargando los datos: {e}")
-        return pd.DataFrame(), pd.DataFrame()
-
-
 def load_data():
     # Si ya tenemos los datos en session_state, no leer de sitios.json
     if "sitios_cache" in st.session_state and "etiquetas_cache" in st.session_state:
@@ -127,40 +101,6 @@ def descargar_desde_github():
 
 
 # 🔐 Función para encriptar y guardar datos
-def save_data_old(df_sitios, df_etiquetas):
-    # Actualizar session_state con los datos más recientes
-    st.session_state["sitios_cache"] = df_sitios
-    st.session_state["etiquetas_cache"] = df_etiquetas
-
-    # Hacer copia de seguridad
-    #shutil.copy("sitios.json", "sitios_backup.json")
-    
-    # 🛠️ Asegurar que las etiquetas tengan un id único antes de guardar
-    if "id" not in df_etiquetas.columns:
-        df_etiquetas["id"] = range(1, len(df_etiquetas) + 1)
-    else:
-        df_etiquetas["id"] = df_etiquetas["id"].fillna(pd.Series(range(1, len(df_etiquetas) + 1)))
-
-    # Asegurar que etiquetas en `df_sitios` sean listas
-    df_sitios["etiquetas"] = df_sitios["etiquetas"].apply(
-        lambda x: x if isinstance(x, list) else []
-    )
-
-    # 🔍 Depuración: Verificar qué datos se guardarán
-    #st.write("🔍 Datos a guardar en sitios.json:", df_sitios.to_dict(orient="records"))
-    #st.write("🔍 Datos a guardar en etiquetas.json:", df_etiquetas.to_dict(orient="records"))
-
-    data = {
-        "sitios": df_sitios.to_dict(orient="records"),
-        "etiquetas": df_etiquetas.to_dict(orient="records")
-    }
-
-    encrypted_data = FERNET.encrypt(json.dumps(data, indent=4, ensure_ascii=False).encode())
-    with open("sitios.json", "wb") as file:
-        file.write(encrypted_data)
-    st.cache_data.clear()
-
-
 def save_data(df_sitios, df_etiquetas):
     # Actualizar en session_state para evitar recarga con datos antiguos
     st.session_state["sitios_cache"] = df_sitios

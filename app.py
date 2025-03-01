@@ -134,19 +134,7 @@ if page == "📍 Mapa":
         else:
             etiquetas_dict = {}
         #st.write("Etiquetas disponibles en el filtro:", etiquetas_dict)
-        with st.container():
-            st.markdown(
-                """
-                <style>
-                    div[data-testid="stMultiSelect"] {
-                    max-height: 100px;
-                    overflow-y: auto;
-                    }
-                </style>
-                """,
-                unsafe_allow_html=True
-    )
-            etiquetas_seleccionadas = st.multiselect("Filtrar por etiquetas", list(etiquetas_dict.values()))
+        etiquetas_seleccionadas = st.multiselect("Filtrar por etiquetas", list(etiquetas_dict.values()))
     with col2: 
         puntuacion_minima = st.selectbox("Puntuación mínima", options=[None, 1, 2, 3, 4, 5], index=0, format_func=lambda x: "Sin filtro" if x is None else str(x))
     with col3:
