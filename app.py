@@ -65,169 +65,116 @@ st.sidebar.write("")
 st.sidebar.write("")
 st.sidebar.markdown("### Más info en [GitHub](https://github.com/jviosca/CulinaryMap)")
 
+import streamlit as st
+import pandas as pd
+import time
+import folium
+from streamlit_js_eval import get_geolocation  # Importación de geolocalización
+
 if page == "📍 Mapa":
     st.title("CulinaryMap")
     st.subheader("Recomendaciones culinarias")
-    # Mensaje destacado con Markdown
+
+    # Mensaje destacado
     st.markdown("""
     ---
     **❗ ¿Ubicación incorrecta?**  
     *Si encuentras un sitio mal ubicado en el mapa, envíame un 
     📩 [correo](mailto:jviosca@gmail.com)*
     """)
-    
+
     # Checkbox para mostrar ubicación del usuario
-    mostrar_mi_ubicacion = st.checkbox("📍 Mostrar mi ubicación (en móvil activar GPS)", value=False)
-    
+    mostrar_mi_ubicacion = st.checkbox("📍 Mostrar mi ubicación (en móvil activar GPS)", 
+                                       value=st.session_state.get("mostrar_mi_ubicacion", False))
+
+    # Guardar la preferencia del usuario
+    st.session_state["mostrar_mi_ubicacion"] = mostrar_mi_ubicacion
+
     # Obtener geolocalización solo si el usuario lo activa y aún no la tenemos
     if mostrar_mi_ubicacion:
-        if "user_location" not in st.session_state or st.session_state["user_location"] is None:
+        if "user_location" not in st.session_state:
             ubicacion = get_geolocation()
 
-            # Mostrar la ubicación obtenida para depuración
-            #st.write("📍 Datos obtenidos de get_geolocation():", ubicacion)
-
-            # Extraer coordenadas correctamente desde "coords"
-            try:
-                if (
-                    ubicacion 
-                    and "coords" in ubicacion
-                    and "latitude" in ubicacion["coords"]
-                    and "longitude" in ubicacion["coords"]
-                ):
-                    st.session_state["user_location"] = [
-                        ubicacion["coords"]["latitude"],
-                        ubicacion["coords"]["longitude"],
-                    ]
+            if ubicacion and isinstance(ubicacion, dict) and "coords" in ubicacion:
+                coords = ubicacion["coords"]
+                if "latitude" in coords and "longitude" in coords:
+                    st.session_state["user_location"] = [coords["latitude"], coords["longitude"]]
                     st.success("✅ Ubicación obtenida correctamente.")
                 else:
-                    st.warning("⏳ Obteniendo ubicación... Si tarda demasiado, revisa los permisos del navegador.")
-            except Exception as e:
-                st.error(f"❌ Error obteniendo la ubicación: {e}")
+                    st.warning("⏳ Ubicación en proceso... Si tarda demasiado, revisa los permisos del navegador.")
+            else:
+                st.warning("⏳ Esperando ubicación... Puede que necesites habilitar el GPS.")
             time.sleep(1)
 
-    # Mapa centrado en una ubicación por defecto (Valencia, España)
-    if "selected_location" not in st.session_state:
-        # Filtrar solo los sitios con latitud y longitud válidas
-        sitios_validos = sitios.dropna(subset=["lat", "lon"])
+    # 📌 Asegurarse de que centro_mapa esté en session_state
+    if "centro_mapa" not in st.session_state:
+        st.session_state["centro_mapa"] = [39.4699, -0.3763]  # Valor por defecto (Valencia)
 
-        # Seleccionar un sitio aleatorio válido
-        primer_sitio = None
-        max_intentos = 10
-
-        for _ in range(max_intentos):
-            if not sitios_validos.empty:
-                posible_sitio = sitios_validos.sample(n=1).iloc[0]
-                if not pd.isna(posible_sitio["lat"]) and not pd.isna(posible_sitio["lon"]):
-                    primer_sitio = posible_sitio
-                    break  # Se encontró un sitio válido
-
-        # Guardar la ubicación en session_state para que no cambie al recargar la interfaz
-        if primer_sitio is not None:
-            st.session_state["selected_location"] = {
-                "lat": primer_sitio["lat"],
-                "lon": primer_sitio["lon"],
-                "nombre": primer_sitio["nombre"]
-            }
-        else:
-            st.session_state["selected_location"] = {
-                "lat": 39.4699,  # Valencia, España
-                "lon": -0.3763,
-                "nombre": "Ubicación por defecto"
-            }
-
-    # Determinar la ubicación del mapa
-    if "mapa_centrado" in st.session_state:
-        centro_mapa = [
-            st.session_state["mapa_centrado"]["lat"],
-            st.session_state["mapa_centrado"]["lon"]
+    # 1️⃣ Si el usuario buscó un sitio, actualizar centro_mapa
+    if "busqueda_ubicacion" in st.session_state:
+        st.session_state["centro_mapa"] = [
+            st.session_state["busqueda_ubicacion"]["lat"], 
+            st.session_state["busqueda_ubicacion"]["lon"]
         ]
-        del st.session_state["mapa_centrado"]  # Borrar la variable después de usarla
-    elif mostrar_mi_ubicacion and "user_location" in st.session_state and st.session_state["user_location"] is not None:
-        centro_mapa = st.session_state["user_location"]
-    elif not mostrar_mi_ubicacion:
-        centro_mapa = [
-            st.session_state["selected_location"]["lat"],
-            st.session_state["selected_location"]["lon"],
-        ]
-    else:
-        st.warning("⚠️ No se pudo obtener la ubicación. Inténtalo de nuevo.")
-        centro_mapa = [
-            st.session_state["selected_location"]["lat"],
-            st.session_state["selected_location"]["lon"],
-        ]
+        del st.session_state["busqueda_ubicacion"]  # ✅ Borrar después de usar para evitar conflictos
 
- 
-    
-    # Filtro de etiquetas arriba del mapa
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        #etiquetas_dict = {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas.to_dict('records')} if isinstance(etiquetas, pd.DataFrame) else {etiqueta['id']: etiqueta['nombre'] for etiqueta in etiquetas} if isinstance(etiquetas, list) and all(isinstance(etiqueta, dict) for etiqueta in etiquetas) else {}
-        if isinstance(etiquetas, pd.DataFrame):
-            etiquetas_dict = {etiqueta["id"]: etiqueta["nombre"] for etiqueta in etiquetas.to_dict("records")}
-        elif isinstance(etiquetas, list) and all(isinstance(etiqueta, dict) for etiqueta in etiquetas):
-            etiquetas_dict = {etiqueta["id"]: etiqueta["nombre"] for etiqueta in etiquetas}
-        else:
-            etiquetas_dict = {}
-        #st.write("Etiquetas disponibles en el filtro:", etiquetas_dict)
-        etiquetas_seleccionadas = st.multiselect("Filtrar por etiquetas", list(etiquetas_dict.values()))
-    with col2: 
-        puntuacion_minima = st.selectbox("Puntuación mínima", options=[None, 1, 2, 3, 4, 5], index=0, format_func=lambda x: "Sin filtro" if x is None else str(x))
-    with col3:
-        #visitado = st.checkbox("Mostrar solo visitados")
-        filtro_visitados = st.selectbox("Filtrar por visitas", 
-                ["No filtrar", "Visitados", "No visitados"])
-    # Aplicar filtros
-    if etiquetas_seleccionadas:
-        #sitios = sitios[sitios["etiquetas"].apply(lambda x: any(tag in x for tag in etiquetas_seleccionadas))]
-        sitios = sitios[sitios["etiquetas"].apply(lambda x: isinstance(x, list) and any(tag in x for tag in etiquetas_seleccionadas))]
-    if puntuacion_minima is not None:
-        sitios = sitios[(sitios["puntuación"].notna()) & (sitios["puntuación"] >= puntuacion_minima)]
-    #if visitado:
-        #sitios = sitios[sitios["visitado"] == True]    
-    if filtro_visitados == "Visitados":
-        sitios = sitios[sitios["visitado"] == True]
-    elif filtro_visitados == "No visitados":
-        sitios = sitios[sitios["visitado"] == False]
-    
-    # Agregar campo de búsqueda arriba de los filtros
+    # 2️⃣ Si el usuario activó "Mostrar mi ubicación", actualizar centro_mapa
+    elif mostrar_mi_ubicacion and "user_location" in st.session_state:
+        st.session_state["centro_mapa"] = st.session_state["user_location"]
+
+    # 📍 Campo de búsqueda de sitios
     busqueda = st.text_input("🔍 Buscar sitio por nombre:")
 
-    # Aplicar filtro de búsqueda en el nombre del sitio
+    # Aplicar búsqueda sin modificar el DataFrame original
+    sitios_filtrados = sitios  # Mantener una copia sin modificar para que muestre todos si no se busca nada
+
     if busqueda:
-        sitios = sitios[sitios["nombre"].str.contains(busqueda, case=False, na=False)]
-        if not sitios.empty:
-            centro_mapa = [sitios.iloc[0]["lat"], sitios.iloc[0]["lon"]]
+        sitios_filtrados = sitios[sitios["nombre"].str.contains(busqueda, case=False, na=False)]
+        if not sitios_filtrados.empty:
+            # Actualizar centro_mapa directamente sin usar mapa_centrado
+            st.session_state["centro_mapa"] = [sitios_filtrados.iloc[0]["lat"], sitios_filtrados.iloc[0]["lon"]]
+            st.session_state["busqueda_ubicacion"] = {
+                "lat": sitios_filtrados.iloc[0]["lat"],
+                "lon": sitios_filtrados.iloc[0]["lon"]
+            }
+        else:
+            st.warning("❌ No se encontró ningún sitio con ese nombre.")
 
-    # Mostrar cuántos sitios coinciden con la búsqueda
-    st.write(f"Resultados encontrados: {len(sitios)}")
     
+    # Mostrar cuántos sitios coinciden con la búsqueda
+    st.write(f"Resultados encontrados: {len(sitios_filtrados)}")
 
-    # Crear el mapa con Folium
-    m = folium.Map(location=centro_mapa, zoom_start=13)   
+    # 📍 Crear el mapa con Folium con la última ubicación registrada en centro_mapa
+    m = folium.Map(location=st.session_state["centro_mapa"], zoom_start=13)
 
     # Agregar marcadores de sitios
-    for _, sitio in sitios.iterrows():
+    for _, sitio in sitios_filtrados.iterrows():
         if pd.notna(sitio["lat"]) and pd.notna(sitio["lon"]):  # Asegura que lat/lon no sean NaN
-            # Construir el popup dinámicamente
-            popup_text = f"<a href='{sitio.get('ubicación', '#')}' target='_blank'>{sitio['nombre']}</a>"
+            # Construir el popup dinámicamente con valores seguros
+            popup_text = f"<a href='{sitio.get('ubicación', '#') or '#'}' target='_blank'>{sitio['nombre']}</a>"
+
             # Agregar estrellas solo si la puntuación no es None o NaN
             if pd.notna(sitio.get("puntuación")):
                 popup_text += f" ({sitio['puntuación']}⭐)"
-            if pd.notna(sitio.get("web")):
-                popup_text += f"\n<a href='{sitio.get('web', '#')}' target='_blank'>{sitio['web']}</a>"
+
+            # Agregar enlace a la web solo si está presente
+            if pd.notna(sitio.get("web")) and sitio.get("web"):
+                popup_text += f"<br><a href='{sitio.get('web')}' target='_blank'>🌍 Sitio Web</a>"
+
             # Agregar etiquetas si existen
-            if isinstance(sitio.get("etiquetas"), list) and len(sitio["etiquetas"]) > 0:
-                etiquetas_text = ", ".join(etq.strip() for etq in sitio["etiquetas"] if isinstance(etq, str))
+            etiquetas = sitio.get("etiquetas")
+            if isinstance(etiquetas, list) and etiquetas:  # Asegura que sea una lista válida
+                etiquetas_text = ", ".join(etq.strip() for etq in etiquetas if isinstance(etq, str))
                 popup_text += f"<br>🏷️ {etiquetas_text}"
-            # mostrar coordenadas en popup para debugging
-            #popup_text += f"\nCoordenadas: " + str(sitio["lat"]) + ", " + str(sitio["lon"])
+
+            # Agregar marcador al mapa
             folium.Marker(
                 location=[sitio["lat"], sitio["lon"]],
-                popup = popup_text,
-                tooltip = sitio["nombre"],
-                icon = folium.Icon(color="blue" if sitio.get("visitado", False) else "gray")
+                popup=popup_text,
+                tooltip=sitio["nombre"],
+                icon=folium.Icon(color="blue" if sitio.get("visitado", False) else "gray")
             ).add_to(m)
+
 
     # Mostrar el mapa en Streamlit
     col1, col2, col3 = st.columns([0.2,0.6,0.2])
@@ -335,7 +282,11 @@ elif page == "🔑 Admin":
                 st.success("✅ Sitio añadido correctamente!")
                 time.sleep(2)
                 # Guardar coordenadas en `st.session_state`
-                st.session_state["mapa_centrado"] = {"lat": lat, "lon": lon}
+                #st.session_state["mapa_centrado"] = {"lat": lat, "lon": lon}
+                st.session_state["centro_mapa"] = [lat, lon]
+                # 🔥 Borrar ubicaciones anteriores para evitar sobreescrituras
+                st.session_state.pop("busqueda_ubicacion", None)
+                st.session_state.pop("user_location", None)
                 # Cambiar de página
                 st.session_state["next_page"] = "📍 Mapa"
                 st.rerun()  # Refrescar la app
