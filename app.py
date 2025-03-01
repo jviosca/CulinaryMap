@@ -1,4 +1,11 @@
 import streamlit as st
+st.set_page_config(
+    page_title="CulinaryMap",  # Título de la pestaña en el navegador
+    page_icon="🍽️",  # Icono de la pestaña
+    layout="wide",  # Configuración amplia
+    initial_sidebar_state="collapsed"  # Barra lateral expandida por defecto
+)
+
 import folium
 #from streamlit_folium import folium_static
 from streamlit_folium import st_folium
@@ -14,13 +21,6 @@ from aux_functions import (
                         obtener_coordenadas_desde_google_maps,
                         reparar_datos_guardados,
                         calcular_conteo_etiquetas
-)
-
-st.set_page_config(
-    page_title="CulinaryMap",  # Título de la pestaña en el navegador
-    page_icon="🍽️",  # Icono de la pestaña
-    layout="wide",  # Configuración amplia
-    initial_sidebar_state="collapsed"  # Barra lateral expandida por defecto
 )
 
 #if st.button("🔄 Reparar datos guardados"): # si etiquetas no tienen id, no se muestran todas
