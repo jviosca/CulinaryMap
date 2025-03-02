@@ -46,7 +46,7 @@ SECRET_KEY = get_secret_key()
 
 # 📌 Inicializar Fernet con la clave correcta
 FERNET = Fernet(SECRET_KEY.encode())
-st.write("🔐 Clave de cifrado cargada correctamente.")
+#st.write("🔐 Clave de cifrado cargada correctamente.")
 
 
 def authenticate():
@@ -156,6 +156,7 @@ def subir_a_github(encrypted_data):
 
     if response.status_code in [200, 201]:
         #st.write("✅ `sitios.json` actualizado correctamente en GitHub")
+        pass
     else:
         st.error(f"❌ Error al subir a GitHub: {response.json()}")
 
