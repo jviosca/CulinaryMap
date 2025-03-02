@@ -465,6 +465,28 @@ elif page == "🔑 Admin":
         else:
             st.info("No hay sitios para eliminar.")
 
+    with st.expander("🗑️  Eliminar etiquetas sin sitios asociados"):
+        # Obtener etiquetas eliminables
+        etiquetas_usadas = set()
+        for etiquetas in df_sitios["etiquetas"].dropna():
+            if isinstance(etiquetas, str):
+                etiquetas_usadas.update(etiquetas.split(", "))
+            elif isinstance(etiquetas, list):
+                etiquetas_usadas.update(etiquetas)
+        etiquetas_totales = set(df_etiquetas["nombre"])
+        etiquetas_eliminables = list(etiquetas_totales - etiquetas_usadas)
+
+        if etiquetas_eliminables:
+            etiqueta_a_eliminar = st.selectbox("Selecciona una etiqueta para eliminar", etiquetas_eliminables)
+            if st.button("Eliminar Etiqueta"):
+                df_etiquetas = df_etiquetas[df_etiquetas["nombre"] != etiqueta_a_eliminar]
+                save_data(df_sitios, df_etiquetas)  # Guardar cambios
+                st.success(f"Etiqueta '{etiqueta_a_eliminar}' eliminada con éxito.")
+                time.sleep(2)
+                st.rerun()
+        else:
+            st.info("No hay etiquetas disponibles para eliminar.")
+
     # 🔒 Cerrar sesión
     if st.button("Cerrar sesión"):
         st.session_state.authenticated = False
