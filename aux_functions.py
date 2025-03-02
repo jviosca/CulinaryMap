@@ -94,7 +94,7 @@ def descargar_desde_github():
     if response.status_code == 200:
         with open("sitios.json", "wb") as file:
             file.write(response.content)
-        st.write("✅ Última versión de sitios.json descargada desde GitHub")
+        #st.write("✅ Última versión de sitios.json descargada desde GitHub")
     else:
         st.error("❌ No se pudo descargar sitios.json desde GitHub")
 
@@ -155,7 +155,7 @@ def subir_a_github(encrypted_data):
     response = requests.put(url, headers=headers, json=data)
 
     if response.status_code in [200, 201]:
-        st.write("✅ `sitios.json` actualizado correctamente en GitHub")
+        #st.write("✅ `sitios.json` actualizado correctamente en GitHub")
     else:
         st.error(f"❌ Error al subir a GitHub: {response.json()}")
 
